@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/Shaders">
+        <file>Shaders/filterFitGridY.vert</file>
+        <file>Shaders/displayRGBAVideo.frag</file>
+        <file>Shaders/displayRGBAVideo.vert</file>
+        <file>Shaders/filterFitGridX.frag</file>
+        <file>Shaders/filterFitGridY.frag</file>
+        <file>Shaders/filterFitGridX.vert</file>
+        <file>Shaders/filterRotateImage.vert</file>
+        <file>Shaders/filterRotateImage.frag</file>
+    </qresource>
+</RCC>
