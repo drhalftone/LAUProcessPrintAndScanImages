@@ -29,7 +29,9 @@ SOURCES += main.cpp \
            lauimagematchingwidget.cpp \
            laumemoryobject.cpp \
            laucombineimagestopdfwidget.cpp \
-           lausplitimagestotiffwidget.cpp
+           lausplitimagestotiffwidget.cpp \
+           lautiff2pdfobject.cpp \
+           lauwidgetmenu.cpp
 
 HEADERS += laumemoryobject.h \
            laucombineimagestopdfwidget.h \
@@ -37,7 +39,9 @@ HEADERS += laumemoryobject.h \
            laufindgridglwidget.h \
            lauimageglwidget.h \
            lauimagematchingwidget.h \
-           lausplitimagestotiffwidget.h
+           lausplitimagestotiffwidget.h \
+           lautiff2pdfobject.h \
+           lauwidgetmenu.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -78,7 +78,7 @@ public:
     {
         this->setLayout(new QVBoxLayout());
         this->layout()->setContentsMargins(6, 6, 6, 6);
-        this->setWindowTitle(QString("Thumbnail Layout Dialog"));
+        this->setWindowTitle(QString("Scan Splicing Dialog"));
 
         buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
         connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), this, SLOT(accept()));

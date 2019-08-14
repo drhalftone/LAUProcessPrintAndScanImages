@@ -320,8 +320,19 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
             filestring.append(QString("0"));
         }
         filestring.append(QString("%1").arg(index));
+
+#define OUTPUTPDFFILES
+#ifdef OUTPUTPDFFILES
+        // SAVE THE MEMORY OBJECT TO A TIFF FILE IN THE TEMPORARY DIRECTORY
+        QString tempString = QDir::tempPath().append("/temp.tif");
+        if (object.save(tempString)) {
+            filestring.append(QString(".pdf"));
+            LAUTiff2PdfObject pdfObject(tempString, filestring);
+        }
+#else
         filestring.append(QString(".tif"));
         object.save(filestring);
+#endif
         index++;
     }
     painter.end();

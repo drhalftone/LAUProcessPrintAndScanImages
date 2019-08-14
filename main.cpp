@@ -1,10 +1,7 @@
 #include <QApplication>
 #include <QSurfaceFormat>
 
-#include "laucombineimagestopdfwidget.h"
-#include "lausplitimagestotiffwidget.h"
-#include "laufindgridbatchwidget.h"
-#include "lauimagematchingwidget.h"
+#include "lauwidgetmenu.h"
 
 int main(int argc, char *argv[])
 {
@@ -27,12 +24,7 @@ int main(int argc, char *argv[])
     format.setRenderableType(QSurfaceFormat::OpenGL);
     QSurfaceFormat::setDefaultFormat(format);
 
-    //LAUCombineImagesToPDFDialog w;
-    //LAUSplitImagesToTiffDialog w;
-    LAUImageMatchDialog w;
-    //LAUFindGridBatchDialog w((QStringList()));
-    if (w.isValid()) {
-        return (w.exec());
-    }
-    return (0);
+    LAUWidgetMenu w;
+    w.show();
+    return (a.exec());
 }

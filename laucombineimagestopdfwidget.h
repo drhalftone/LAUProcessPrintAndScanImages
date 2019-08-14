@@ -13,6 +13,7 @@
 #include <QDialogButtonBox>
 
 #include "laumemoryobject.h"
+#include "lautiff2pdfobject.h"
 
 /****************************************************************************/
 /****************************************************************************/
@@ -141,9 +142,9 @@ public:
         connect(button, SIGNAL(pressed()), this, SLOT(onLoadImages()));
         buttonBox->addButton(button, QDialogButtonBox::ActionRole);
 
-        button = new QPushButton("Preprocess");
-        connect(button, SIGNAL(pressed()), this, SLOT(onPreProcessImages()));
-        buttonBox->addButton(button, QDialogButtonBox::ActionRole);
+        //button = new QPushButton("Preprocess");
+        //connect(button, SIGNAL(pressed()), this, SLOT(onPreProcessImages()));
+        //buttonBox->addButton(button, QDialogButtonBox::ActionRole);
     }
 
     bool isValid()
