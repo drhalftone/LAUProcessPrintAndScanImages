@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <QSpinBox>
 #include <QSettings>
+#include <QComboBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -99,11 +100,16 @@ public:
         return (true);
     }
 
+    LAUMemoryObject simulateNoise(QImage image, QRect position, float resolution);
+
 private:
+    LAUMemoryObject noiseObject;
+
     QString directoryString;
     QSpinBox *imageColsSpinBox;         // NUMBER OF IMAGES PER ROW
     QSpinBox *imageRowsSpinBox;         // NUMERS OF IMAGES PER COLUMN
     QSpinBox *outputResolutionSpinBox;  // RESOLUTION OF OUTPUT IN PIXELS PER INCH
+    QComboBox *simulateNoiseCheckBox;   // CHECK BOX TO LET USER SIMULATE PRINT ARTIFACTS
     QDoubleSpinBox *pageWidthSpinBox;   // PAGE WIDTH
     QDoubleSpinBox *pageHeightSpinBox;  // PAGE HEIGHT
     QDoubleSpinBox *leftMarginSpinBox;  // LEFT/RIGHT MARGIN

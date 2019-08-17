@@ -151,6 +151,12 @@ LAUCombineImagesToPDFWidget::LAUCombineImagesToPDFWidget(QWidget *parent) : QWid
     connect(spaceBetweenImages, SIGNAL(valueChanged(double)), label, SLOT(onSetGap(double)));
     reinterpret_cast<QFormLayout *>(widget->layout())->addRow(QString("Gap between images (in):"), spaceBetweenImages);
 
+    simulateNoiseCheckBox = new QComboBox();
+    simulateNoiseCheckBox->addItem(QString("NO"));
+    simulateNoiseCheckBox->addItem(QString("YES"));
+    simulateNoiseCheckBox->setFixedWidth(120);
+    reinterpret_cast<QFormLayout *>(widget->layout())->addRow(QString("Simulate Noise:"), simulateNoiseCheckBox);
+
     this->layout()->addWidget(widget);
 
     widget = new QWidget();
@@ -169,6 +175,7 @@ LAUCombineImagesToPDFWidget::LAUCombineImagesToPDFWidget(QWidget *parent) : QWid
     leftMarginSpinBox->setValue(settings.value("LAUCombineImagesToPDFWidget::leftMarginSpinBox", 0.5).toDouble());
     topMarginSpinBox->setValue(settings.value("LAUCombineImagesToPDFWidget::topMarginSpin", 0.5).toDouble());
     spaceBetweenImages->setValue(settings.value("LAUCombineImagesToPDFWidget::spaceBetweenImages", 0.1).toDouble());
+    simulateNoiseCheckBox->setCurrentText(settings.value("LAUCombineImagesToPDFWidget::simulateNoiseCheckBox", QString("NO")).toString());
 }
 
 /****************************************************************************/
@@ -185,6 +192,7 @@ LAUCombineImagesToPDFWidget::~LAUCombineImagesToPDFWidget()
     settings.setValue("LAUCombineImagesToPDFWidget::leftMarginSpinBox", leftMarginSpinBox->value());
     settings.setValue("LAUCombineImagesToPDFWidget::topMarginSpin", topMarginSpinBox->value());
     settings.setValue("LAUCombineImagesToPDFWidget::spaceBetweenImages", spaceBetweenImages->value());
+    settings.setValue("LAUCombineImagesToPDFWidget::simulateNoiseCheckBox", simulateNoiseCheckBox->currentText());
 }
 
 /****************************************************************************/
@@ -213,7 +221,7 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
     QString thumbnailString = QFileDialog::getSaveFileName(this, QString("Save thumbnail images..."), directory, QString("*.tif"));
     if (thumbnailString.isEmpty() == false) {
         // SAVE THE DIRECTORY TO SETTINGS FOR NEXT TIME
-        settings.setValue("LAUCombineImagesToPDFWidget::saveThumbnails", outputString);
+        settings.setValue("LAUCombineImagesToPDFWidget::saveThumbnails", thumbnailString);
 
         // CHOP OFF THE FILE EXTENSION, IF IT EXISTS
         if (thumbnailString.toLower().endsWith(".tif")) {
@@ -223,14 +231,32 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
         }
     }
 
+    // GET THE FILENAME FOR THE NOISEY THUMBNAIL IMAGES
+    QString noiseyString;
+    if (simulateNoiseCheckBox->currentText() == QString("YES")) {
+        directory = settings.value("LAUCombineImagesToPDFWidget::noiseyThumbnailImages", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+        noiseyString = QFileDialog::getSaveFileName(this, QString("Save noisey thumbnail images..."), directory, QString("*.tif"));
+        if (noiseyString.isEmpty() == false) {
+            // SAVE THE DIRECTORY TO SETTINGS FOR NEXT TIME
+            settings.setValue("LAUCombineImagesToPDFWidget::noiseyThumbnailImages", noiseyString);
+
+            // CHOP OFF THE FILE EXTENSION, IF IT EXISTS
+            if (noiseyString.toLower().endsWith(".tif")) {
+                noiseyString.chop(4);
+            } else if (noiseyString.toLower().endsWith(".tiff")) {
+                noiseyString.chop(5);
+            }
+        }
+    }
+
     // GET A LIST OF IMAGES FROM THE INPUT DIRECTORY
     QStringList filters;
     filters << "*.tif";
     QStringList strings = QDir(directoryString).entryList(filters, QDir::Files);
 
-    while (strings.count() > 1000) {
-        strings.removeLast();
-    }
+    //while (strings.count() > 1000) {
+    //    strings.removeLast();
+    //}
 
     int cols = imageColsSpinBox->value();
     int rows = imageRowsSpinBox->value();
@@ -302,6 +328,25 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
                             image.save(filestring, "TIFF");
                         }
 
+                        if (simulateNoiseCheckBox->currentText() == QString("YES")) {
+                            LAUMemoryObject object = simulateNoise(image, rect, resolution);
+
+                            // SAVE THE THUMBNAIL TO DISK
+                            QString filestring = noiseyString;
+                            if (counter < 10) {
+                                filestring.append(QString("0000"));
+                            } else if (counter < 100) {
+                                filestring.append(QString("000"));
+                            } else if (counter < 1000) {
+                                filestring.append(QString("00"));
+                            } else if (counter < 10000) {
+                                filestring.append(QString("0"));
+                            }
+                            filestring.append(QString("%1").arg(counter));
+                            filestring.append(QString(".tif"));
+                            object.save(filestring);
+                        }
+
                         painter.drawImage(rect, image, image.rect());
                     }
                     counter++;
@@ -355,6 +400,44 @@ void LAUCombineImagesToPDFDialog::onLoadImages()
         // ENABLE THE OK BUTTON NOW THAT WE HAVE A VALID SOURCE IMAGE DIRECTORY
         buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
     }
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+LAUMemoryObject LAUCombineImagesToPDFWidget::simulateNoise(QImage image, QRect position, float resolution)
+{
+    // SEE IF WE HAVE A VALID NOISE STRING
+    if (noiseObject.isNull()) {
+        noiseObject = LAUMemoryObject((QString()));
+    }
+
+    // SEE IF WE NEED TO RESAMPLE THE THUMBNAIL TO THE NOISE OBJECT RESOLUTION
+    if (qAbs(resolution - noiseObject.resolution()) > 0.001f) {
+        int newLft = qRound((double)position.left() / (double)resolution * (double)noiseObject.resolution());
+        int newWdt = qRound((double)position.width() / (double)resolution * (double)noiseObject.resolution());
+        int newTop = qRound((double)position.top() / (double)resolution * (double)noiseObject.resolution());
+        int newHgt = qRound((double)position.height() / (double)resolution * (double)noiseObject.resolution());
+
+        position = QRect(newLft, newTop, newWdt, newHgt);
+    }
+
+    image = image.convertToFormat(QImage::Format_Grayscale8);
+    image = image.scaled(position.width(), position.height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
+    LAUMemoryObject object((unsigned int)image.width(), (unsigned int)image.height(), 1, sizeof(unsigned short));
+    for (unsigned int row = 0; row < object.height(); row++) {
+        unsigned short *buffer = reinterpret_cast<unsigned short *>(object.scanLine(row));
+        for (unsigned int col = 0; col < object.width(); col++) {
+            double pixel = (double)qRed(image.pixel((int)col, (int)row)) / 255.0;;
+            unsigned int noiseCol = col + (unsigned int)position.left();
+            if (noiseCol < noiseObject.width()) {
+                unsigned int noiseRow = (unsigned int)qRound((double)(noiseObject.height() - 1) * pixel);
+                buffer[col] = reinterpret_cast<unsigned short *>(noiseObject.constScanLine(noiseRow))[noiseCol];
+            }
+        }
+    }
+    return (object);
 }
 
 /****************************************************************************/

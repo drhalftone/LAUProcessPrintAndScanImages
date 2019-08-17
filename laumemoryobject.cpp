@@ -400,7 +400,11 @@ bool LAUMemoryObject::load(TIFF *inTiff, unsigned short index)
 
     // READ AND CHECK THE PHOTOMETRIC INTERPRETATION FIELD AND MAKE SURE ITS WHAT WE EXPECT
     TIFFGetField(inTiff, TIFFTAG_PHOTOMETRIC, &uShortVariable);
-    if (colors() == 3) {
+    if (colors() == 1) {
+        if (uShortVariable != PHOTOMETRIC_MINISBLACK) {
+            return (false);
+        }
+    } else if (colors() == 3) {
         if (uShortVariable != PHOTOMETRIC_RGB && uShortVariable != PHOTOMETRIC_MINISBLACK) {
             return (false);
         }
