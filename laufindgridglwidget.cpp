@@ -1,4 +1,5 @@
 #include "laufindgridglwidget.h"
+#include <QInputDialog>
 #include <locale.h>
 #include <math.h>
 
@@ -45,7 +46,6 @@ void LAUFindGridGLWidget::initializeGL()
     initializeOpenGLFunctions();
     glClearColor(0.5f, 0.0f, 0.0f, 1.0f);
 
-    // get context opengl-version
     qDebug() << "Widget OpenGl: " << format().majorVersion() << "." << format().minorVersion();
     qDebug() << "Context valid: " << context()->isValid();
     qDebug() << "Really used OpenGl: " << context()->format().majorVersion() << "." << context()->format().minorVersion();
@@ -221,6 +221,7 @@ void LAUFindGridGLWidget::process(LAUMemoryObject obj)
 
         // CREATE A FORMAT OBJECT FOR CREATING THE FRAME BUFFER
         QOpenGLFramebufferObjectFormat frameBufferObjectFormat;
+        frameBufferObjectFormat.setTextureTarget(GL_TEXTURE_2D);
         frameBufferObjectFormat.setInternalTextureFormat(GL_RGBA32F);
 
         // CREATE NEW FRAME BUFFER OBJECTS
@@ -296,6 +297,7 @@ void LAUFindGridGLWidget::process(LAUMemoryObject obj)
                     frameBufferObjectA.release();
                 }
                 glBindTexture(GL_TEXTURE_2D, frameBufferObjectA.texture());
+                glPixelStorei(GL_PACK_ALIGNMENT, 1);
                 glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constScanLine(0));
 
                 double entrpy = entropy(obj);
@@ -350,6 +352,7 @@ void LAUFindGridGLWidget::process(LAUMemoryObject obj)
         }
 
         glBindTexture(GL_TEXTURE_2D, frameBufferObjectB.texture());
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, bestObjY.constScanLine(0));
         entropy(bestObjY);
 
@@ -403,29 +406,30 @@ void LAUFindGridGLWidget::process(LAUMemoryObject obj)
 
             // DOWNLOAD THE NEW OBJECT FROM THE GPU TEXTURE
             glBindTexture(GL_TEXTURE_2D, frameBufferObjectC->texture());
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
             if (object.colors() == 1) {
                 if (object.depth() == sizeof(unsigned char)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_R, GL_UNSIGNED_BYTE, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_R, GL_UNSIGNED_BYTE, object.constPointer());
                 } else if (object.depth() == sizeof(unsigned short)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_R, GL_UNSIGNED_SHORT, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_R, GL_UNSIGNED_SHORT, object.constPointer());
                 } else if (object.depth() == sizeof(float)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_R, GL_FLOAT, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_R, GL_FLOAT, object.constPointer());
                 }
             } else if (object.colors() == 3) {
                 if (object.depth() == sizeof(unsigned char)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, object.constPointer());
                 } else if (object.depth() == sizeof(unsigned short)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_SHORT, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_SHORT, object.constPointer());
                 } else if (object.depth() == sizeof(float)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, object.constPointer());
                 }
             } else if (object.colors() == 4) {
                 if (object.depth() == sizeof(unsigned char)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, object.constPointer());
                 } else if (object.depth() == sizeof(unsigned short)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_SHORT, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_SHORT, object.constPointer());
                 } else if (object.depth() == sizeof(float)) {
-                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, object.constScanLine(0));
+                    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, object.constPointer());
                 }
             }
 
@@ -540,6 +544,9 @@ LAUMemoryObject LAUFindGridGLWidget::result(int col, int row)
 {
     if (col < 0 && row < 0) {
         return (object);
+    } else if (row < 0) {
+        row = (col / numCols);
+        col = (col % numCols);
     }
     return (object.crop(QRect(col * solution.x() + solution.y(), row * solution.z() + solution.w(), solution.x(), solution.z())));
 }
@@ -549,12 +556,15 @@ LAUMemoryObject LAUFindGridGLWidget::result(int col, int row)
 /****************************************************************************/
 QVector4D LAUFindGridGLWidget::findGaps(LAUMemoryObject objX, LAUMemoryObject objY)
 {
+    objX.save(QString("/tmp/objX.tif"));
+    objY.save(QString("/tmp/objY.tif"));
+
     QVector4D solution;
 
     float cumSumOptX = 0.0f;
     float *bufferX = reinterpret_cast<float *>(objX.constPointer());
-    for (int a = (int)objX.width() / (numCols + 2); a < (int)objX.width(); a++) {
-        for (int b = 0; b < (int)objX.width(); b++) {
+    for (int a = (int)objX.width() / (2 * numCols); a < (int)objX.width(); a++) {
+        for (int b = 0; b < (int)objX.width() / numCols; b++) {
             float cumSum = 0.0f;
             for (int n = 0; n < numCols; n++) {
                 int pos = n * a + b;
@@ -563,6 +573,7 @@ QVector4D LAUFindGridGLWidget::findGaps(LAUMemoryObject objX, LAUMemoryObject ob
                     cumSum += bufferX[4 * pos + 1];
                     cumSum += bufferX[4 * pos + 2];
                 } else {
+                    cumSum = 0.0f;
                     break;
                 }
             }
@@ -577,8 +588,8 @@ QVector4D LAUFindGridGLWidget::findGaps(LAUMemoryObject objX, LAUMemoryObject ob
 
     float cumSumOptY = 0.0f;
     float *bufferY = reinterpret_cast<float *>(objY.constPointer());
-    for (int a = (int)objY.height() / (numRows + 2); a < (int)objY.height(); a++) {
-        for (int b = 0; b < (int)objY.height(); b++) {
+    for (int a = (int)objY.height() / (2 * numRows); a < (int)objY.height(); a++) {
+        for (int b = 0; b < (int)objY.height() / numRows; b++) {
             float cumSum = 0.0f;
             for (int n = 0; n < numRows; n++) {
                 int pos = n * a + b;
@@ -587,6 +598,7 @@ QVector4D LAUFindGridGLWidget::findGaps(LAUMemoryObject objX, LAUMemoryObject ob
                     cumSum += bufferY[4 * pos + 1];
                     cumSum += bufferY[4 * pos + 2];
                 } else {
+                    cumSum = 0.0f;
                     break;
                 }
             }
@@ -599,4 +611,42 @@ QVector4D LAUFindGridGLWidget::findGaps(LAUMemoryObject objX, LAUMemoryObject ob
         }
     }
     return (solution);
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+void LAUFindGridDialog::accept()
+{
+    QSettings settings;
+    QString directory = settings.value("LAUMemoryObject::lastUsedDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    if (QDir(directory).exists() == false) {
+        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
+    QString filename = QFileDialog::getSaveFileName(this, QString("Save image to disk (*.tif)"), directory);
+    if (filename.isEmpty() == false) {
+        settings.setValue("LAUMemoryObject::lastUsedDirectory", QFileInfo(filename).absolutePath());
+        if (filename.toLower().endsWith(".tif")) {
+            filename.chop(4);
+        } else if (filename.toLower().endsWith(".tiff")) {
+            filename.chop(5);
+        }
+
+        bool okay = false;
+        int startingIndex = QInputDialog::getInt(this, QString("Find Grid"), QString("Set the starting image number:"), settings.value("LAUFindGridDialog::startingIndex", 0).toInt(), 0, 100000, 1, &okay);
+        if (okay) {
+            settings.setValue("LAUFindGridDialog::startingIndex", startingIndex);
+            for (int index = 0; index < static_cast<int>(widget->rows() * widget->cols()); index++) {
+                int ind = index + startingIndex;
+                QString filenameWithIndex = QString("%1").arg(ind);
+                while (filenameWithIndex.length() < 5) {
+                    filenameWithIndex.prepend('0');
+                }
+                filenameWithIndex.prepend(QString("%1_").arg(filename));
+                filenameWithIndex.append(QString(".tif"));
+                widget->result(index).save(filenameWithIndex);
+            }
+            QDialog::accept();
+        }
+    }
 }

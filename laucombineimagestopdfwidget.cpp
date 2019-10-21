@@ -3,6 +3,7 @@
 #include <QStandardPaths>
 #include <QFileDialog>
 #include <QPainter>
+#include <QDir>
 
 /****************************************************************************/
 /****************************************************************************/
@@ -203,6 +204,9 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
     // GET THE FILENAME FOR THE OUTPUT THUMBNAIL SHEETS
     QSettings settings;
     QString directory = settings.value("LAUCombineImagesToPDFWidget::processThumbnails", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    if (QDir().exists(directory) == false) {
+        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
     QString outputString = QFileDialog::getSaveFileName(this, QString("Save print sheets..."), directory, QString("*.tif"));
     if (outputString.isEmpty()) {
         return (false);
@@ -218,6 +222,9 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
 
     // GET THE FILENAME FOR THE TRANSFORMED THUMBNAIL IMAGES
     directory = settings.value("LAUCombineImagesToPDFWidget::saveThumbnails", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    if (QDir().exists(directory) == false) {
+        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
     QString thumbnailString = QFileDialog::getSaveFileName(this, QString("Save thumbnail images..."), directory, QString("*.tif"));
     if (thumbnailString.isEmpty() == false) {
         // SAVE THE DIRECTORY TO SETTINGS FOR NEXT TIME
@@ -392,6 +399,9 @@ void LAUCombineImagesToPDFDialog::onLoadImages()
 {
     QSettings settings;
     QString directory = settings.value("LAUCombineImagesToPDFDialog::lastUsedDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    if (QDir().exists(directory) == false) {
+        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
     directory = QFileDialog::getExistingDirectory(this, QString("Load source directory..."), directory);
     if (directory.isEmpty() == false) {
         settings.setValue("LAUCombineImagesToPDFDialog::lastUsedDirectory", directory);
@@ -448,6 +458,9 @@ void LAUCombineImagesToPDFDialog::preProcessDataSet()
     // LET THE USER SELECT THE INPUT IMAGE DIRECTORY
     QSettings settings;
     QString sourceDirectory = settings.value("LAUCombineImagesToPDFDialog::preProcessDataSet", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    if (QDir().exists(sourceDirectory) == false) {
+        sourceDirectory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
     sourceDirectory = QFileDialog::getExistingDirectory(nullptr, QString("Load preprocess directory..."), sourceDirectory);
     if (sourceDirectory.isEmpty() == false) {
         settings.setValue("LAUCombineImagesToPDFDialog::preProcessDataSet", sourceDirectory);
@@ -455,6 +468,9 @@ void LAUCombineImagesToPDFDialog::preProcessDataSet()
 
     // NOW LET THE USER SPECIFY THE OUTPUT FILES
     QString sinkDirectory = settings.value("LAUCombineImagesToPDFWidget::postProcessDataSet", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    if (QDir().exists(sinkDirectory) == false) {
+        sinkDirectory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
     QString string = QFileDialog::getSaveFileName(nullptr, QString("Save thumbnails..."), sinkDirectory, QString("*.tif"));
     if (string.isEmpty()) {
         return;

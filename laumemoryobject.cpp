@@ -267,6 +267,9 @@ bool LAUMemoryObject::save(QString filename, QWidget *parent)
 #ifndef HEADLESS
         QSettings settings;
         QString directory = settings.value("LAUMemoryObject::lastUsedDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+        if (QDir(directory).exists() == false) {
+            directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        }
         filename = QFileDialog::getSaveFileName(parent, QString("Save image to disk (*.tif)"), directory);
         if (filename.isEmpty() == false) {
             if (filename.toLower().endsWith(".tif") == false && filename.toLower().endsWith(".tiff") == false) {

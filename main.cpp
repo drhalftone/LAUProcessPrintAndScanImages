@@ -10,12 +10,6 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
 
-    QApplication a(argc, argv);
-    a.setOrganizationName(QString("Lau Consulting Inc"));
-    a.setOrganizationDomain(QString("drhalftone.com"));
-    a.setApplicationName(QString("LAUCombineImagesToPDF"));
-    a.setQuitOnLastWindowClosed(true);
-
     QSurfaceFormat format;
     format.setDepthBufferSize(10);
     format.setMajorVersion(3);
@@ -23,6 +17,12 @@ int main(int argc, char *argv[])
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setRenderableType(QSurfaceFormat::OpenGL);
     QSurfaceFormat::setDefaultFormat(format);
+
+    QApplication a(argc, argv);
+    a.setOrganizationName(QString("Lau Consulting Inc"));
+    a.setOrganizationDomain(QString("drhalftone.com"));
+    a.setApplicationName(QString("LAUCombineImagesToPDF"));
+    a.setQuitOnLastWindowClosed(true);
 
     LAUWidgetMenu w;
     w.show();

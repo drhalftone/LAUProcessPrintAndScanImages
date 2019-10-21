@@ -91,11 +91,16 @@ public:
         // ADD OUR SPLIT IMAGE WIDGET
         if (imageStrings.count() > 1) {
             mode = ModeBatchProcess;
-            widget = new LAUSplitImagesToTiffWidget(imageStrings.first());
         } else {
             mode = ModeSingleProcess;
+        }
+
+        if (imageStrings.count() > 0) {
+            widget = new LAUSplitImagesToTiffWidget(imageStrings.first());
+        } else {
             widget = new LAUSplitImagesToTiffWidget();
         }
+
         reinterpret_cast<QVBoxLayout *>(this->layout())->insertWidget(0, widget);
     }
 
@@ -115,7 +120,7 @@ protected:
                 QDialog::accept();
             }
         } else if (mode == ModeSingleProcess) {
-            LAUFindGridGLDialog dialog(widget->object(), this);
+            LAUFindGridDialog dialog(widget->object(), this);
             dialog.setCols(widget->cols());
             dialog.setRows(widget->rows());
             if (dialog.exec() == QDialog::Accepted) {

@@ -57,6 +57,9 @@ LAUSplitImagesToTiffWidget::LAUSplitImagesToTiffWidget(QString filename, QWidget
     if (filename.isNull()) {
         QSettings settings;
         QString directory = settings.value("LAUSplitImagesToTiffWidget::lastUsedDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+        if (QDir(directory).exists() == false) {
+            directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        }
         filename = QFileDialog::getOpenFileName(nullptr, QString("Load scan from disk (*.tif)"), directory, QString("*.tif;*.tiff"));
         if (filename.isEmpty() == false) {
             settings.setValue("LAUSplitImagesToTiffWidget::lastUsedDirectory", QFileInfo(filename).absolutePath());
@@ -111,6 +114,9 @@ bool LAUSplitImagesToTiffWidget::processThumbnails()
 {
     QSettings settings;
     QString directory = settings.value("LAUSplitImagesToTiffWidget::lastUsedDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    if (QDir(directory).exists() == false) {
+        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
     QString string = QFileDialog::getSaveFileName(this, QString("Save thumbnails..."), directory, QString("*.tif"));
     if (string.isEmpty()) {
         return (false);
@@ -143,6 +149,9 @@ void LAUSplitImagesToTiffDialog::onLoadImages()
 {
     QSettings settings;
     QString directory = settings.value("LAUSplitImagesToTiffDialog::sourceImageDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+    if (QDir(directory).exists() == false) {
+        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
     QString sourceImageDirectory = QFileDialog::getExistingDirectory(this, QString("Load source directory..."), directory);
     if (sourceImageDirectory.isEmpty() == false) {
         settings.setValue("LAUSplitImagesToTiffDialog::sourceImageDirectory", sourceImageDirectory);

@@ -127,12 +127,12 @@ signals:
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-class LAUFindGridGLDialog : public QDialog
+class LAUFindGridDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit LAUFindGridGLDialog(LAUMemoryObject obj, QWidget *parent = nullptr) : QDialog(parent)
+    explicit LAUFindGridDialog(LAUMemoryObject obj, QWidget *parent = nullptr) : QDialog(parent)
     {
         this->setLayout(new QVBoxLayout());
         this->layout()->setContentsMargins(6, 6, 6, 6);
@@ -176,12 +176,7 @@ public:
     }
 
 protected:
-    void accept()
-    {
-        if (widget->result().save()) {
-            QDialog::accept();
-        }
-    }
+    void accept();
 
 private:
     QDialogButtonBox *buttonBox;
