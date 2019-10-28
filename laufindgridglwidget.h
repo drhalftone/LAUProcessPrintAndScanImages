@@ -162,6 +162,11 @@ public:
         }
     }
 
+    void setFilename(QString string)
+    {
+        fileString = string;
+    }
+
     QTransform mapping() const
     {
         if (widget) {
@@ -179,6 +184,7 @@ protected:
     void accept();
 
 private:
+    QString fileString;
     QDialogButtonBox *buttonBox;
     QString sourceImageDirectory;
     LAUFindGridGLWidget *widget;

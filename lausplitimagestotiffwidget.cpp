@@ -7,7 +7,7 @@
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-LAUSplitImagesToTiffWidget::LAUSplitImagesToTiffWidget(QString filename, QWidget *parent) : QWidget(parent)
+LAUSplitImagesToTiffWidget::LAUSplitImagesToTiffWidget(QString filename, QWidget *parent) : QWidget(parent), fileString(filename)
 {
     this->setLayout(new QHBoxLayout());
     this->layout()->setContentsMargins(6, 6, 6, 6);
@@ -54,22 +54,22 @@ LAUSplitImagesToTiffWidget::LAUSplitImagesToTiffWidget(QString filename, QWidget
     this->layout()->addWidget(widget);
 
     // GET A FILE TO OPEN FROM THE USER IF NOT ALREADY PROVIDED ONE
-    if (filename.isNull()) {
+    if (fileString.isNull()) {
         QSettings settings;
         QString directory = settings.value("LAUSplitImagesToTiffWidget::lastUsedDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
         if (QDir(directory).exists() == false) {
             directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
         }
-        filename = QFileDialog::getOpenFileName(nullptr, QString("Load scan from disk (*.tif)"), directory, QString("*.tif;*.tiff"));
-        if (filename.isEmpty() == false) {
-            settings.setValue("LAUSplitImagesToTiffWidget::lastUsedDirectory", QFileInfo(filename).absolutePath());
+        fileString = QFileDialog::getOpenFileName(nullptr, QString("Load scan from disk (*.tif)"), directory, QString("*.tif;*.tiff"));
+        if (fileString.isEmpty() == false) {
+            settings.setValue("LAUSplitImagesToTiffWidget::lastUsedDirectory", QFileInfo(fileString).absolutePath());
         } else {
             return;
         }
     }
 
     // LET THE USER SELECT A FILE FROM THE FILE DIALOG
-    localObject = LAUMemoryObject(filename);
+    localObject = LAUMemoryObject(fileString);
 
     label = new LAUImageGLWidget(localObject);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

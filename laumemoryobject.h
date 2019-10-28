@@ -53,7 +53,12 @@
 #include <QSharedDataPointer>
 
 #ifndef HEADLESS
+#include <QLabel>
+#include <QDialog>
 #include <QFileDialog>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QDialogButtonBox>
 #endif
 
 #include "opencv2/core.hpp"
@@ -136,6 +141,11 @@ public:
     QImage preview();
     LAUMemoryObject crop(QRect rect) const;
     unsigned int nonZeroPixelsCount() const;
+
+    void deepCopy()
+    {
+        data.detach();
+    }
 
     // SEE IF THE POINTERS ARE LOOKING AT SAME MEMORY
     bool operator == (const LAUMemoryObject &other) const
@@ -352,5 +362,36 @@ signals:
 };
 
 Q_DECLARE_METATYPE(LAUMemoryObject);
+
+#ifndef HEADLESS
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+class LAUMemoryObjectPreview : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit LAUMemoryObjectPreview(LAUMemoryObject objA, QWidget *parent = nullptr) : QDialog(parent)
+    {
+        this->setLayout(new QVBoxLayout());
+        this->layout()->setContentsMargins(6, 6, 6, 6);
+        this->setWindowTitle(QString("Memory Object Preview"));
+
+        label = new QLabel();
+        label->setMinimumSize(480, 320);
+        label->setPixmap(QPixmap::fromImage(objA.preview()));
+        this->layout()->addWidget(label);
+
+        QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+        connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), this, SLOT(accept()));
+        connect(buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), this, SLOT(reject()));
+        this->layout()->addWidget(buttonBox);
+    }
+
+private:
+    QLabel *label;
+};
+#endif
 
 #endif // LAUMEMORYOBJECT_H

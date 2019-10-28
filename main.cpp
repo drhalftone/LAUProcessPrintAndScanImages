@@ -5,18 +5,19 @@
 
 int main(int argc, char *argv[])
 {
-    qRegisterMetaType<LAUMemoryObject>("LAUMemoryObject");
+	QSurfaceFormat format;
+	format.setDepthBufferSize(10);
+	format.setMajorVersion(4);
+	format.setMinorVersion(1);
+	format.setProfile(QSurfaceFormat::CoreProfile);
+	format.setRenderableType(QSurfaceFormat::OpenGL);
+	QSurfaceFormat::setDefaultFormat(format);
 
-    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
-
-    QSurfaceFormat format;
-    format.setDepthBufferSize(10);
-    format.setMajorVersion(3);
-    format.setMinorVersion(3);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setRenderableType(QSurfaceFormat::OpenGL);
-    QSurfaceFormat::setDefaultFormat(format);
+#ifndef Q_OS_LINUX
+	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+	QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+	QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
     QApplication a(argc, argv);
     a.setOrganizationName(QString("Lau Consulting Inc"));
@@ -24,7 +25,9 @@ int main(int argc, char *argv[])
     a.setApplicationName(QString("LAUCombineImagesToPDF"));
     a.setQuitOnLastWindowClosed(true);
 
-    LAUWidgetMenu w;
+    qRegisterMetaType<LAUMemoryObject>("LAUMemoryObject");
+
+	LAUWidgetMenu w;
     w.show();
     return (a.exec());
 }

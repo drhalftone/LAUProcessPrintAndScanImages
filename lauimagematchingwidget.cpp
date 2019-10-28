@@ -118,6 +118,9 @@ QMatrix3x3 LAUImageMatchingWidget::homography(LAUMemoryObject objA, LAUMemoryObj
 /****************************************************************************/
 LAUMemoryObject LAUImageMatchingWidget::match(LAUMemoryObject objA, LAUMemoryObject objB)
 {
+    // FORCE A DEEP COPY OF THE TARGET IMAGE
+    objB.deepCopy();
+
     Mat img_object = objA.toMat();
     Mat img_scene = objB.toMat();
 

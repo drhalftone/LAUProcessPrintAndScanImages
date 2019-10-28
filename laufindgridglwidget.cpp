@@ -623,6 +623,7 @@ void LAUFindGridDialog::accept()
     if (QDir(directory).exists() == false) {
         directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     }
+
     QString filename = QFileDialog::getSaveFileName(this, QString("Save image to disk (*.tif)"), directory);
     if (filename.isEmpty() == false) {
         settings.setValue("LAUMemoryObject::lastUsedDirectory", QFileInfo(filename).absolutePath());
@@ -633,7 +634,12 @@ void LAUFindGridDialog::accept()
         }
 
         bool okay = false;
-        int startingIndex = QInputDialog::getInt(this, QString("Find Grid"), QString("Set the starting image number:"), settings.value("LAUFindGridDialog::startingIndex", 0).toInt(), 0, 100000, 1, &okay);
+        int startingIndex = QFileInfo(fileString).completeBaseName().toInt(&okay);
+        if (okay == false) {
+            startingIndex = QInputDialog::getInt(this, QString("Find Grid"), QString("Set the starting image number:"), settings.value("LAUFindGridDialog::startingIndex", 0).toInt(), 0, 100000, 1, &okay);
+        } else {
+            startingIndex *= (widget->rows() * widget->cols());
+        }
         if (okay) {
             settings.setValue("LAUFindGridDialog::startingIndex", startingIndex);
             for (int index = 0; index < static_cast<int>(widget->rows() * widget->cols()); index++) {

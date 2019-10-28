@@ -38,6 +38,11 @@ public:
         return (object().isValid());
     }
 
+    QString filename() const
+    {
+        return (fileString);
+    }
+
     LAUMemoryObject object() const
     {
         return (localObject);
@@ -54,12 +59,13 @@ public:
     }
 
 private:
+    QString fileString;
     LAUMemoryObject localObject;
 
     QString directoryString;
     QSpinBox *imageColsSpinBox;         // NUMBER OF IMAGES PER ROW
     QSpinBox *imageRowsSpinBox;         // NUMERS OF IMAGES PER COLUMN
-    QSpinBox *inputResolutionSpinBox;  // RESOLUTION OF OUTPUT IN PIXELS PER INCH
+    QSpinBox *inputResolutionSpinBox;   // RESOLUTION OF OUTPUT IN PIXELS PER INCH
     QDoubleSpinBox *pageWidthSpinBox;   // PAGE WIDTH
     QDoubleSpinBox *pageHeightSpinBox;  // PAGE HEIGHT
 
@@ -121,6 +127,7 @@ protected:
             }
         } else if (mode == ModeSingleProcess) {
             LAUFindGridDialog dialog(widget->object(), this);
+            dialog.setFilename(widget->filename());
             dialog.setCols(widget->cols());
             dialog.setRows(widget->rows());
             if (dialog.exec() == QDialog::Accepted) {

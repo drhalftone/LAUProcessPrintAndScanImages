@@ -1,6 +1,12 @@
 #ifndef LAUIMAGEMATCHINGWIDGET_H
 #define LAUIMAGEMATCHINGWIDGET_H
 
+#include <QDialog>
+#include <QFileDialog>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QDialogButtonBox>
+
 #include "lauimageglwidget.h"
 
 /****************************************************************************/
@@ -35,6 +41,60 @@ private:
     LAUMemoryObject objectA, objectB;
     LAUImageGLWidget *lftWidget;
     LAUImageGLWidget *rghWidget;
+};
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+class LAUObjectMatchPreview : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit LAUObjectMatchPreview(LAUMemoryObject objA, LAUMemoryObject objB, QWidget *parent = nullptr) : QDialog(parent)
+    {
+        flag = 0;
+        pixmapA = QPixmap::fromImage(objA.preview());
+        pixmapB = QPixmap::fromImage(objB.preview());
+
+        this->setLayout(new QVBoxLayout());
+        this->layout()->setContentsMargins(6, 6, 6, 6);
+        this->setWindowTitle(QString("Object Match Preview"));
+
+        label = new QLabel();
+        label->setMinimumSize(480, 320);
+        label->setPixmap(pixmapB);
+        this->layout()->addWidget(label);
+
+        QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+        connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), this, SLOT(accept()));
+        connect(buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), this, SLOT(reject()));
+        this->layout()->addWidget(buttonBox);
+    }
+
+protected:
+    void showEvent(QShowEvent *)
+    {
+        this->startTimer(1000);
+    }
+
+    void timerEvent(QTimerEvent *)
+    {
+        if (flag == 0) {
+            flag = 1;
+            label->setPixmap(pixmapA);
+            qDebug() << "pixmapA";
+        } else {
+            flag = 0;
+            label->setPixmap(pixmapB);
+            qDebug() << "pixmapB";
+        }
+    }
+
+private:
+    int flag;
+    QPixmap pixmapA, pixmapB;
+    QLabel *label;
 };
 
 /****************************************************************************/
@@ -82,8 +142,10 @@ protected:
     void accept()
     {
         LAUMemoryObject object = widget->match(widget->leftObject(), widget->rightObject());
-        if (object.save()) {
-            QDialog::accept();
+        if (LAUObjectMatchPreview(object, widget->rightObject()).exec() == QDialog::Accepted) {
+            if (object.save()) {
+                QDialog::accept();
+            }
         }
     }
 
