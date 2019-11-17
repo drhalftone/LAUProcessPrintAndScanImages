@@ -88,11 +88,6 @@ public:
     LAUCombineImagesToPDFWidget(QWidget *parent = nullptr);
     ~LAUCombineImagesToPDFWidget();
 
-    void setDirectoryString(QString directory)
-    {
-        directoryString = directory;
-    }
-
     bool processThumbnails();
 
     bool isValid()
@@ -105,7 +100,6 @@ public:
 private:
     LAUMemoryObject noiseObject;
 
-    QString directoryString;
     QSpinBox *imageColsSpinBox;         // NUMBER OF IMAGES PER ROW
     QSpinBox *imageRowsSpinBox;         // NUMERS OF IMAGES PER COLUMN
     QSpinBox *outputResolutionSpinBox;  // RESOLUTION OF OUTPUT IN PIXELS PER INCH
@@ -140,17 +134,6 @@ public:
         connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), this, SLOT(accept()));
         connect(buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), this, SLOT(reject()));
         this->layout()->addWidget(buttonBox);
-
-        // DISABLE THE OK BUTTON UNTIL AFTER THE USER SETS THE SOURCE IMAGE DIRECTORY
-        buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
-
-        QPushButton *button = new QPushButton("Set Source Directory");
-        connect(button, SIGNAL(pressed()), this, SLOT(onLoadImages()));
-        buttonBox->addButton(button, QDialogButtonBox::ActionRole);
-
-        //button = new QPushButton("Preprocess");
-        //connect(button, SIGNAL(pressed()), this, SLOT(onPreProcessImages()));
-        //buttonBox->addButton(button, QDialogButtonBox::ActionRole);
     }
 
     bool isValid()
@@ -171,7 +154,6 @@ protected:
     }
 
 public slots:
-    void onLoadImages();
     void onPreProcessImages()
     {
         preProcessDataSet();

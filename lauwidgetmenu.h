@@ -2,8 +2,10 @@
 #define LAUWIDGETMENU_H
 
 #include <QWidget>
+#include <QPushButton>
 
 #include "laumemoryobject.h"
+#include "laudefaultdirectorieswidget.h"
 
 class LAUWidgetMenu : public QWidget
 {
@@ -14,6 +16,9 @@ public:
 
 public slots:
     void onButtonClicked();
+
+private:
+    QList<QPushButton *> buttons;
 };
 
 #endif // LAUWIDGETMENU_H

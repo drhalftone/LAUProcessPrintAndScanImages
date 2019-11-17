@@ -5,19 +5,19 @@
 
 int main(int argc, char *argv[])
 {
-	QSurfaceFormat format;
-	format.setDepthBufferSize(10);
-	format.setMajorVersion(4);
-	format.setMinorVersion(1);
-	format.setProfile(QSurfaceFormat::CoreProfile);
-	format.setRenderableType(QSurfaceFormat::OpenGL);
-	QSurfaceFormat::setDefaultFormat(format);
+    QSurfaceFormat format;
+    format.setDepthBufferSize(10);
+    format.setMajorVersion(4);
+    format.setMinorVersion(1);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setRenderableType(QSurfaceFormat::OpenGL);
+    QSurfaceFormat::setDefaultFormat(format);
 
 #ifndef Q_OS_LINUX
-	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
-	QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
-	QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
     QApplication a(argc, argv);
     a.setOrganizationName(QString("Lau Consulting Inc"));
@@ -27,7 +27,13 @@ int main(int argc, char *argv[])
 
     qRegisterMetaType<LAUMemoryObject>("LAUMemoryObject");
 
-	LAUWidgetMenu w;
+    //    QStringList keys;
+    //    keys << "Directory A";
+    //    keys << "Dire B";
+    //    keys << "Directory C";
+
+    LAUDefaultDirectoriesDialog::load();
+    LAUWidgetMenu w;
     w.show();
     return (a.exec());
 }

@@ -1,4 +1,6 @@
 #include "laucombineimagestopdfwidget.h"
+#include "laudefaultdirectorieswidget.h"
+
 #include <QProgressDialog>
 #include <QStandardPaths>
 #include <QFileDialog>
@@ -201,47 +203,15 @@ LAUCombineImagesToPDFWidget::~LAUCombineImagesToPDFWidget()
 /****************************************************************************/
 bool LAUCombineImagesToPDFWidget::processThumbnails()
 {
-    // GET THE FILENAME FOR THE OUTPUT THUMBNAIL SHEETS
-    QSettings settings;
-    QString directory = settings.value("LAUCombineImagesToPDFWidget::processThumbnails", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
-    if (QDir().exists(directory) == false) {
-        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    }
-    QString outputString = QFileDialog::getSaveFileName(this, QString("Save print sheets..."), directory, QString("*.tif"));
-    if (outputString.isEmpty()) {
-        return (false);
-    }
-    settings.setValue("LAUCombineImagesToPDFWidget::processThumbnails", outputString);
-
     // CHOP OFF THE FILE EXTENSION, IF IT EXISTS
-    if (outputString.toLower().endsWith(".tif")) {
-        outputString.chop(4);
-    } else if (outputString.toLower().endsWith(".tiff")) {
-        outputString.chop(5);
-    }
-
-    // GET THE FILENAME FOR THE TRANSFORMED THUMBNAIL IMAGES
-    directory = settings.value("LAUCombineImagesToPDFWidget::saveThumbnails", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
-    if (QDir().exists(directory) == false) {
-        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    }
-    QString thumbnailString = QFileDialog::getSaveFileName(this, QString("Save thumbnail images..."), directory, QString("*.tif"));
-    if (thumbnailString.isEmpty() == false) {
-        // SAVE THE DIRECTORY TO SETTINGS FOR NEXT TIME
-        settings.setValue("LAUCombineImagesToPDFWidget::saveThumbnails", thumbnailString);
-
-        // CHOP OFF THE FILE EXTENSION, IF IT EXISTS
-        if (thumbnailString.toLower().endsWith(".tif")) {
-            thumbnailString.chop(4);
-        } else if (thumbnailString.toLower().endsWith(".tiff")) {
-            thumbnailString.chop(5);
-        }
-    }
+    QString outputString = QString("%1/prestineSheet").arg(LAUDefaultDirectoriesDialog::prestineSheetsDirectory);
+    QString thumbnailString = QString("%1/prestineThumbnail").arg(LAUDefaultDirectoriesDialog::prestineThumbnailDirectory);
 
     // GET THE FILENAME FOR THE NOISEY THUMBNAIL IMAGES
+    QSettings settings;
     QString noiseyString;
     if (simulateNoiseCheckBox->currentText() == QString("YES")) {
-        directory = settings.value("LAUCombineImagesToPDFWidget::noiseyThumbnailImages", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
+        QString directory = settings.value("LAUCombineImagesToPDFWidget::noiseyThumbnailImages", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
         noiseyString = QFileDialog::getSaveFileName(this, QString("Save noisey thumbnail images..."), directory, QString("*.tif"));
         if (noiseyString.isEmpty() == false) {
             // SAVE THE DIRECTORY TO SETTINGS FOR NEXT TIME
@@ -258,12 +228,8 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
 
     // GET A LIST OF IMAGES FROM THE INPUT DIRECTORY
     QStringList filters;
-    filters << "*.tif";
-    QStringList strings = QDir(directoryString).entryList(filters, QDir::Files);
-
-    //while (strings.count() > 1000) {
-    //    strings.removeLast();
-    //}
+    filters << "*.tif" << "*.jpg" << "*.bmp" << "*.png";
+    QStringList strings = QDir(LAUDefaultDirectoriesDialog::sourceImageDirectory).entryList(filters, QDir::Files);
 
     int cols = imageColsSpinBox->value();
     int rows = imageRowsSpinBox->value();
@@ -303,7 +269,9 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
                         break;
                     }
 
-                    QImage image(QString("%1/%2").arg(directoryString).arg(strings.takeFirst()));
+                    QString string = QString("%1/%2").arg(LAUDefaultDirectoriesDialog::sourceImageDirectory).arg(strings.takeFirst());
+                    qDebug() << string;
+                    QImage image(string);
                     if (image.isNull() == false) {
                         if ((pageWidth > pageHeight) && (image.width() < image.height())) {
                             image = image.transformed(QTransform().rotate(90.0));
@@ -390,26 +358,6 @@ bool LAUCombineImagesToPDFWidget::processThumbnails()
     painter.end();
 
     return (true);
-}
-
-/****************************************************************************/
-/****************************************************************************/
-/****************************************************************************/
-void LAUCombineImagesToPDFDialog::onLoadImages()
-{
-    QSettings settings;
-    QString directory = settings.value("LAUCombineImagesToPDFDialog::lastUsedDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
-    if (QDir().exists(directory) == false) {
-        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    }
-    directory = QFileDialog::getExistingDirectory(this, QString("Load source directory..."), directory);
-    if (directory.isEmpty() == false) {
-        settings.setValue("LAUCombineImagesToPDFDialog::lastUsedDirectory", directory);
-        widget->setDirectoryString(directory);
-
-        // ENABLE THE OK BUTTON NOW THAT WE HAVE A VALID SOURCE IMAGE DIRECTORY
-        buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
-    }
 }
 
 /****************************************************************************/
