@@ -58,6 +58,21 @@ public:
         return (imageRowsSpinBox->value());
     }
 
+    double printedHeight() const
+    {
+        return (pageHeightSpinBox->value());
+    }
+
+    double printedWidth() const
+    {
+        return (pageWidthSpinBox->value());
+    }
+
+    double printedResolution() const
+    {
+        return (inputResolutionSpinBox->value());
+    }
+
 private:
     QString fileString;
     LAUMemoryObject localObject;
@@ -122,6 +137,9 @@ protected:
             LAUFindGridBatchDialog dialog(imageStrings, this);
             dialog.setCols(widget->cols());
             dialog.setRows(widget->rows());
+            dialog.setPrintedWidth(widget->printedWidth());
+            dialog.setPrintedHeight(widget->printedHeight());
+            dialog.setPrintedResolution(widget->printedResolution());
             if (dialog.exec() == QDialog::Accepted) {
                 QDialog::accept();
             }

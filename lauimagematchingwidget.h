@@ -105,7 +105,7 @@ class LAUImageMatchDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit LAUImageMatchDialog(LAUMemoryObject objA = LAUMemoryObject(), LAUMemoryObject objB = LAUMemoryObject(), QWidget *parent = nullptr) : QDialog(parent)
+    explicit LAUImageMatchDialog(LAUMemoryObject objA, LAUMemoryObject objB, QWidget *parent = nullptr) : QDialog(parent)
     {
         this->setLayout(new QVBoxLayout());
         this->layout()->setContentsMargins(6, 6, 6, 6);
@@ -125,6 +125,8 @@ public:
         buttonBox->addButton(button, QDialogButtonBox::ActionRole);
     }
 
+    LAUImageMatchDialog(QWidget *parent = nullptr);
+
     bool isValid()
     {
         if (widget) {
@@ -132,8 +134,6 @@ public:
         }
         return (false);
     }
-
-    static LAUMemoryObject batchProcessImages(QStringList inputs, QStringList outputs);
 
 public slots:
     void onBatchProcessImages();
@@ -151,6 +151,8 @@ protected:
 
 private:
     LAUImageMatchingWidget *widget;
+    QFileInfoList prestineFiles;
+    QFileInfoList printedFiles;
 };
 
 #endif // LAUIMAGEMATCHINGWIDGET_H

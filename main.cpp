@@ -2,6 +2,7 @@
 #include <QSurfaceFormat>
 
 #include "lauwidgetmenu.h"
+#include "lauimagematchingwidget.h"
 
 int main(int argc, char *argv[])
 {
@@ -27,12 +28,11 @@ int main(int argc, char *argv[])
 
     qRegisterMetaType<LAUMemoryObject>("LAUMemoryObject");
 
-    //    QStringList keys;
-    //    keys << "Directory A";
-    //    keys << "Dire B";
-    //    keys << "Directory C";
-
     LAUDefaultDirectoriesDialog::load();
+
+    //LAUImageMatchDialog k(LAUMemoryObject(QString("/Volumes/StickIT II/PrintedThumbnails/printedThumbnail00000.tif")), LAUMemoryObject(QString("/Volumes/StickIT II/PrestineThumbnails/prestineThumbnail00000.tif")));
+    //return k.exec();
+
     LAUWidgetMenu w;
     w.show();
     return (a.exec());

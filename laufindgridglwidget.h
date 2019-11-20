@@ -52,6 +52,21 @@ public:
         return (vertexArrayObject.isCreated());
     }
 
+    void setPrintedWidth(double val)
+    {
+        printedWidth = val;
+    }
+
+    void setPrintedHeight(double val)
+    {
+        printedHeight = val;
+    }
+
+    void setPrintedResolution(double val)
+    {
+        printedResolution = val;
+    }
+
     void setRows(int val)
     {
         numRows = val;
@@ -113,6 +128,7 @@ private:
 
     bool initializedFlag;
     int localWidth, localHeight, numInds;
+    double printedWidth, printedHeight, printedResolution;
     double bestAngle;
 
     int numRows, numCols;

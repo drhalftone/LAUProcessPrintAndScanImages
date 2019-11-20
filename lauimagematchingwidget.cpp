@@ -1,4 +1,7 @@
 #include "lauimagematchingwidget.h"
+#include "laudefaultdirectorieswidget.h"
+
+#include <QProgressDialog>
 
 #include <iostream>
 #include "opencv2/core.hpp"
@@ -12,6 +15,39 @@ using namespace cv;
 using namespace cv::xfeatures2d;
 using std::cout;
 using std::endl;
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+LAUImageMatchDialog::LAUImageMatchDialog(QWidget *parent) : QDialog(parent)
+{
+    this->setLayout(new QVBoxLayout());
+    this->layout()->setContentsMargins(6, 6, 6, 6);
+    this->setWindowTitle(QString("Image Matching Dialog"));
+
+    // GET A LIST OF IMAGES FROM THE INPUT DIRECTORY
+    QStringList filters;
+    filters << "*.tif";
+
+    prestineFiles = QDir(LAUDefaultDirectoriesDialog::prestineThumbnailDirectory).entryInfoList(filters, QDir::Files);
+    printedFiles = QDir(LAUDefaultDirectoriesDialog::printedThumbnailsDirectory).entryInfoList(filters, QDir::Files);
+
+    qDebug() << printedFiles.first().absoluteFilePath();
+    qDebug() << prestineFiles.first().absoluteFilePath();
+
+    widget = new LAUImageMatchingWidget(LAUMemoryObject(printedFiles.first().absoluteFilePath()), LAUMemoryObject(prestineFiles.first().absoluteFilePath()));
+    widget->setMinimumSize(480, 320);
+    this->layout()->addWidget(widget);
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), this, SLOT(accept()));
+    connect(buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), this, SLOT(reject()));
+    this->layout()->addWidget(buttonBox);
+
+    QPushButton *button = new QPushButton("Batch Process");
+    connect(button, SIGNAL(pressed()), this, SLOT(onBatchProcessImages()));
+    buttonBox->addButton(button, QDialogButtonBox::ActionRole);
+}
 
 /****************************************************************************/
 /****************************************************************************/
@@ -35,10 +71,10 @@ LAUImageMatchingWidget::LAUImageMatchingWidget(LAUMemoryObject objA, LAUMemoryOb
         }
     }
 
-    lftWidget = new LAUImageGLWidget(objectA);
+    lftWidget = new LAUImageGLWidget(objectB);
     this->layout()->addWidget(lftWidget);
 
-    rghWidget = new LAUImageGLWidget(objectB);
+    rghWidget = new LAUImageGLWidget(objectA);
     this->layout()->addWidget(rghWidget);
 }
 
@@ -52,7 +88,7 @@ QMatrix3x3 LAUImageMatchingWidget::homography(LAUMemoryObject objA, LAUMemoryObj
 
     //-- Step 1: Detect the keypoints using SURF Detector, compute the descriptors
     int minHessian = 400;
-    Ptr<SURF> detector = SURF::create(minHessian);
+    Ptr<SIFT> detector = SIFT::create(minHessian);
     std::vector<KeyPoint> keypoints_object, keypoints_scene;
     Mat descriptors_object, descriptors_scene;
     detector->detectAndCompute(img_object, noArray(), keypoints_object, descriptors_object);
@@ -74,7 +110,7 @@ QMatrix3x3 LAUImageMatchingWidget::homography(LAUMemoryObject objA, LAUMemoryObj
     }
 
     Mat H(3, 3, CV_64F, 0.0);
-    if (good_matches.size() > 20) {
+    if (good_matches.size() > 10) {
         //-- Localize the object
         std::vector<Point2f> obj;
         std::vector<Point2f> scene;
@@ -82,9 +118,11 @@ QMatrix3x3 LAUImageMatchingWidget::homography(LAUMemoryObject objA, LAUMemoryObj
             //-- Get the keypoints from the good matches
             obj.push_back(keypoints_object[ good_matches[i].queryIdx ].pt);
             scene.push_back(keypoints_scene[ good_matches[i].trainIdx ].pt);
+
+            qDebug() << keypoints_object[ good_matches[i].queryIdx ].pt.x << keypoints_object[ good_matches[i].queryIdx ].pt.y << keypoints_scene[ good_matches[i].queryIdx ].pt.x << keypoints_scene[ good_matches[i].queryIdx ].pt.y;
         }
 
-        H = findHomography(obj, scene, RANSAC);
+        H = findHomography(obj, scene, LMEDS);
     }
 
     QMatrix3x3 T;
@@ -145,92 +183,23 @@ LAUMemoryObject LAUImageMatchingWidget::match(LAUMemoryObject objA, LAUMemoryObj
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-LAUMemoryObject LAUImageMatchDialog::batchProcessImages(QStringList inputs, QStringList outputs)
-{
-    LAUMemoryObject object(3 * outputs.count(), 3 * inputs.count(), 1, sizeof(float));
-    for (int row = 0; row < inputs.count() && row < 20; row++) {
-        LAUMemoryObject input(inputs.at(row));
-        if (input.isValid()) {
-            for (int col = 0; col < outputs.count() && col < 20; col++) {
-                LAUMemoryObject output(outputs.at(col));
-                if (output.isValid()) {
-                    qDebug() << inputs.at(row);
-                    qDebug() << outputs.at(col);
-
-                    QMatrix3x3 T = LAUImageMatchingWidget::homography(input, output);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 0))[3 * col + 0] = T(0, 0);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 0))[3 * col + 1] = T(0, 1);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 0))[3 * col + 2] = T(0, 2);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 1))[3 * col + 0] = T(1, 0);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 1))[3 * col + 1] = T(1, 1);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 1))[3 * col + 2] = T(1, 2);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 2))[3 * col + 0] = T(2, 0);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 2))[3 * col + 1] = T(2, 1);
-                    reinterpret_cast<float *>(object.constScanLine(3 * row + 2))[3 * col + 2] = T(2, 2);
-                }
-            }
-        }
-        qDebug() << "ROW:" << row;
-    }
-    return (object);
-}
-
-/****************************************************************************/
-/****************************************************************************/
-/****************************************************************************/
 void LAUImageMatchDialog::onBatchProcessImages()
 {
-    QStringList inputStrings, outputStrings;
+    int numFiles = qMax(printedFiles.count(), prestineFiles.count());
 
-    QSettings settings;
-    QString directory = settings.value("LAUImageMatchDialog::sourceImageDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
-    QString sourceImageDirectory = QFileDialog::getExistingDirectory(this, QString("Load source directory..."), directory);
-    if (sourceImageDirectory.isEmpty() == false) {
-        settings.setValue("LAUImageMatchDialog::sourceImageDirectory", sourceImageDirectory);
-
-        // GET A LIST OF IMAGES FROM THE INPUT DIRECTORY
-        QStringList filters;
-        filters << "*.tif" << "*.tiff";
-        inputStrings = QDir(sourceImageDirectory).entryList(filters, QDir::Files);
-
-        // PREPEND THE DIRECTORY TO CREATE ABSOLUTE PATH NAMES
-        for (int n = 0; n < inputStrings.count(); n++) {
-            QString string = QString("%1/%2").arg(sourceImageDirectory).arg(inputStrings.at(n));
-            inputStrings.replace(n, string);
+    QProgressDialog dialog(QString("Processing thumbnails..."), QString("Abort"), 0, numFiles, this);
+    dialog.show();
+    for (int n = 0; n < numFiles; n++) {
+        if (dialog.wasCanceled()) {
+            break;
+        } else {
+            dialog.setValue(n);
+            qApp->processEvents();
         }
-    } else {
-        return;
-    }
-
-    directory = settings.value("LAUImageMatchDialog::sinkImageDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
-    QString sinkImageDirectory = QFileDialog::getExistingDirectory(this, QString("Load sink directory..."), directory);
-    if (sinkImageDirectory.isEmpty() == false) {
-        settings.setValue("LAUImageMatchDialog::sinkImageDirectory", sinkImageDirectory);
-
-        // GET A LIST OF IMAGES FROM THE INPUT DIRECTORY
-        QStringList filters;
-        filters << "*.tif" << "*.tiff";
-        outputStrings = QDir(sinkImageDirectory).entryList(filters, QDir::Files);
-
-        // PREPEND THE DIRECTORY TO CREATE ABSOLUTE PATH NAMES
-        for (int n = 0; n < outputStrings.count(); n++) {
-            QString string = QString("%1/%2").arg(sinkImageDirectory).arg(outputStrings.at(n));
-            outputStrings.replace(n, string);
+        LAUMemoryObject object = LAUImageMatchingWidget::match(LAUMemoryObject(printedFiles.at(n).absoluteFilePath()), LAUMemoryObject(prestineFiles.at(n).absoluteFilePath()));
+        if (object.isValid()) {
+            QString string = QString("%1/warp%2").arg(LAUDefaultDirectoriesDialog::warpedThumbnailsDirectory).arg(printedFiles.at(n).fileName().right(18));
+            object.save(string);
         }
-    } else {
-        return;
-    }
-
-    while (inputStrings.count() > 100) {
-        inputStrings.takeLast();
-    }
-
-    while (outputStrings.count() > 100) {
-        outputStrings.takeLast();
-    }
-
-    LAUMemoryObject object = batchProcessImages(inputStrings, outputStrings);
-    if (object.save()) {
-        accept();
     }
 }

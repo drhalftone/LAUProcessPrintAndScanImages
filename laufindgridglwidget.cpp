@@ -142,6 +142,13 @@ void LAUFindGridGLWidget::process(LAUMemoryObject obj)
         // SAVE A LOCAL COPY OF THE INCOMING OBJECT
         object = obj;
 
+        // SEE IF WE NEED TO CROP THE INCOMING MEMORY OBJECT
+        int targetWidth = qFloor(printedWidth * printedResolution);
+        int targetHeight = qFloor(printedHeight * printedResolution);
+        if (object.width() != targetWidth || object.height() != targetHeight) {
+            object = object.crop(targetWidth, targetHeight);
+        }
+
         // MAKE THIS THE CURRENT OPENGL CONTEXT
         makeCurrent();
 

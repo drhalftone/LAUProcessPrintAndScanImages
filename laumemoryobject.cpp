@@ -224,6 +224,7 @@ LAUMemoryObject::LAUMemoryObject(QImage image) : data(new LAUMemoryObjectData())
         data->numRows = (unsigned int)image.height();
         data->numByts = sizeof(unsigned char);
         data->numChns = 3;
+        data->numFrms = 1;
         data->resolution = 72.0f;
         data->allocateBuffer();
 

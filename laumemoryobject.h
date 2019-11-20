@@ -139,6 +139,10 @@ public:
 
     cv::Mat toMat();
     QImage preview();
+    LAUMemoryObject crop(unsigned int wdth, unsigned int hght) const
+    {
+        return (crop(QRect((width() - wdth) / 2, (height() - hght) / 2, wdth, hght)));
+    }
     LAUMemoryObject crop(QRect rect) const;
     unsigned int nonZeroPixelsCount() const;
 

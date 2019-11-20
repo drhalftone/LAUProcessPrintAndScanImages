@@ -64,6 +64,7 @@ public:
     static QString prestineThumbnailDirectory;
     static QString printedSheetsDirectory;
     static QString printedThumbnailsDirectory;
+    static QString warpedThumbnailsDirectory;
 
     static void load();
     static void save();

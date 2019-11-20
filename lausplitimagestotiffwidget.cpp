@@ -1,4 +1,6 @@
 #include "lausplitimagestotiffwidget.h"
+#include "laudefaultdirectorieswidget.h"
+
 #include <QProgressDialog>
 #include <QStandardPaths>
 #include <QFileDialog>
@@ -89,7 +91,9 @@ LAUSplitImagesToTiffWidget::LAUSplitImagesToTiffWidget(QString filename, QWidget
     // SET THE PARAMETERS FROM THE MEMORY OBJECT
     inputResolutionSpinBox->setValue((double)localObject.resolution());
     pageWidthSpinBox->setValue((double)localObject.width() / (double)localObject.resolution());
+    pageWidthSpinBox->setMaximum(pageWidthSpinBox->value());
     pageHeightSpinBox->setValue((double)localObject.height() / (double)localObject.resolution());
+    pageHeightSpinBox->setMaximum(pageHeightSpinBox->value());
 }
 
 /****************************************************************************/
@@ -112,32 +116,10 @@ LAUSplitImagesToTiffWidget::~LAUSplitImagesToTiffWidget()
 /****************************************************************************/
 bool LAUSplitImagesToTiffWidget::processThumbnails()
 {
-    QSettings settings;
-    QString directory = settings.value("LAUSplitImagesToTiffWidget::lastUsedDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
-    if (QDir(directory).exists() == false) {
-        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-    }
-    QString string = QFileDialog::getSaveFileName(this, QString("Save thumbnails..."), directory, QString("*.tif"));
-    if (string.isEmpty()) {
-        return (false);
-    }
-    settings.setValue("LAUSplitImagesToTiffWidget::lastUsedDirectory", string);
-
-    // CHOP OFF THE FILE EXTENSION, IF IT EXISTS
-    if (string.toLower().endsWith(".tif")) {
-        string.chop(4);
-    } else if (string.toLower().endsWith(".tiff")) {
-        string.chop(5);
-    }
-
-    // GET A LIST OF IMAGES FROM THE INPUT DIRECTORY
+    // GET A LIST OF PRINTED SHEETS FROM THE INPUT DIRECTORY
     QStringList filters;
-    filters << "*.jpg";
-    QStringList strings = QDir(directoryString).entryList(filters, QDir::Files);
-
-    while (strings.count() > 1000) {
-        strings.removeLast();
-    }
+    filters << "*.TIFF";
+    QStringList strings = QDir(LAUDefaultDirectoriesDialog::printedSheetsDirectory).entryList(filters, QDir::Files);
 
     return (true);
 }
@@ -147,27 +129,17 @@ bool LAUSplitImagesToTiffWidget::processThumbnails()
 /****************************************************************************/
 void LAUSplitImagesToTiffDialog::onLoadImages()
 {
-    QSettings settings;
-    QString directory = settings.value("LAUSplitImagesToTiffDialog::sourceImageDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
-    if (QDir(directory).exists() == false) {
-        directory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    // GET A LIST OF IMAGES FROM THE INPUT DIRECTORY
+    QStringList filters;
+    filters << "*.tif" << "*.tiff" << "*.TIF" << "*.TIFF";
+    imageStrings = QDir(LAUDefaultDirectoriesDialog::printedSheetsDirectory).entryList(filters, QDir::Files);
+
+    // PREPEND THE DIRECTORY TO CREATE ABSOLUTE PATH NAMES
+    for (int n = 0; n < imageStrings.count(); n++) {
+        QString string = QString("%1/%2").arg(LAUDefaultDirectoriesDialog::printedSheetsDirectory).arg(imageStrings.at(n));
+        imageStrings.replace(n, string);
     }
-    QString sourceImageDirectory = QFileDialog::getExistingDirectory(this, QString("Load source directory..."), directory);
-    if (sourceImageDirectory.isEmpty() == false) {
-        settings.setValue("LAUSplitImagesToTiffDialog::sourceImageDirectory", sourceImageDirectory);
 
-        // GET A LIST OF IMAGES FROM THE INPUT DIRECTORY
-        QStringList filters;
-        filters << "*.tif" << "*.tiff";
-        imageStrings = QDir(sourceImageDirectory).entryList(filters, QDir::Files);
-
-        // PREPEND THE DIRECTORY TO CREATE ABSOLUTE PATH NAMES
-        for (int n = 0; n < imageStrings.count(); n++) {
-            QString string = QString("%1/%2").arg(sourceImageDirectory).arg(imageStrings.at(n));
-            imageStrings.replace(n, string);
-        }
-
-        // ENABLE THE OK BUTTON NOW THAT WE HAVE A VALID SOURCE IMAGE DIRECTORY
-        buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
-    }
+    // ENABLE THE OK BUTTON NOW THAT WE HAVE A VALID SOURCE IMAGE DIRECTORY
+    buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
 }

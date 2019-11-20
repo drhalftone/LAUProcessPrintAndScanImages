@@ -1,38 +1,24 @@
 #include "laufindgridbatchwidget.h"
+#include "laudefaultdirectorieswidget.h"
 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-LAUFindGridBatchDialog::LAUFindGridBatchDialog(QStringList strings, QWidget *parent) : QDialog(parent), counter(0), abortFlag(false), filenames(strings)
+LAUFindGridBatchDialog::LAUFindGridBatchDialog(QStringList strings, QWidget *parent) : QDialog(parent), counter(0), abortFlag(false), filenames(strings), progress(nullptr)
 {
     this->setLayout(new QVBoxLayout());
     this->layout()->setContentsMargins(6, 6, 6, 6);
     this->setWindowTitle(QString("Thumbnail Layout Dialog"));
 
-    QSettings settings;
-    QString directory = settings.value("LAUFindGridBatchDialog::sinkImageDirectory", QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).toString();
-    sinkName = QFileDialog::getSaveFileName(this, QString("Save thumbnails..."), directory, QString("*.tif"));
-    if (sinkName.isEmpty()) {
-        return;
-    }
-    settings.setValue("LAUFindGridBatchDialog::sinkImageDirectory", sinkName);
-
-    // CHOP OFF THE FILE EXTENSION, IF IT EXISTS
-    if (sinkName.toLower().endsWith(".tif")) {
-        sinkName.chop(4);
-    } else if (sinkName.toLower().endsWith(".tiff")) {
-        sinkName.chop(5);
-    }
+    // SET THE SINK FILE NAME BASED ON THE DEFAULT DIRECTORIES
+    sinkName = QString("%1/printedThumbnail").arg(LAUDefaultDirectoriesDialog::printedThumbnailsDirectory);
 
     // CREATE A GLWIDGET FOR DISPLAY AND PROCESSING OF MEMORY OBJECTS
     widget = new LAUFindGridGLWidget(LAUMemoryObject());
-    widget->setMinimumSize(480, 320);
+    widget->setMinimumSize(640, 480);
     connect(this, SIGNAL(emitObject(LAUMemoryObject)), widget, SLOT(onUpdateObject(LAUMemoryObject)), Qt::QueuedConnection);
     connect(widget, SIGNAL(emitObject(LAUMemoryObject)), this, SLOT(onUpdateObject(LAUMemoryObject)), Qt::QueuedConnection);
     this->layout()->addWidget(widget);
-
-    progress = new QProgressBar();
-    this->layout()->addWidget(progress);
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), this, SLOT(onAbort()));
@@ -43,15 +29,28 @@ LAUFindGridBatchDialog::LAUFindGridBatchDialog(QStringList strings, QWidget *par
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
+void LAUFindGridBatchDialog::showEvent(QShowEvent *)
+{
+    // CREATE A PROGRESS BAR
+    progress = new QProgressDialog(QString("Processing printed sheets..."), QString("Abort"), 0, filenames.count(), this, Qt::Sheet);
+    progress->show();
+
+    // START THE PROCESSING OF OBJECTS
+    emit emitObject(LAUMemoryObject());
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
 void LAUFindGridBatchDialog::onUpdateObject(LAUMemoryObject obj)
 {
-    if (abortFlag) {
+    if (progress->wasCanceled()) {
         QDialog::reject();
     } else {
         // EXTRACT ALL THE IMAGES OF THE JUST PROCESSED MEMORY OBJECT
         if (obj.isValid()) {
-            for (int row = 0; row < widget->rows(); row++) {
-                for (int col = 0; col < widget->cols(); col++) {
+            for (unsigned int row = 0; row < widget->rows(); row++) {
+                for (unsigned int col = 0; col < widget->cols(); col++) {
                     LAUMemoryObject object = widget->result(col, row);
 
                     QString filestring = sinkName;
@@ -71,12 +70,10 @@ void LAUFindGridBatchDialog::onUpdateObject(LAUMemoryObject obj)
                     counter++;
                 }
             }
-        } else {
-            progress->setMaximum(filenames.count());
         }
 
         // LOAD THE NEXT IMAGE IN THE INPUT LIST
-        while (filenames.count() > 0) {
+        if (filenames.count() > 0) {
             LAUMemoryObject obj = LAUMemoryObject(filenames.takeFirst());
             if (obj.isValid()) {
                 progress->setValue(progress->maximum() - filenames.count());

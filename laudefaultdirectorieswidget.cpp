@@ -13,6 +13,7 @@ QString LAUDefaultDirectoriesDialog::prestineSheetsDirectory;
 QString LAUDefaultDirectoriesDialog::prestineThumbnailDirectory;
 QString LAUDefaultDirectoriesDialog::printedSheetsDirectory;
 QString LAUDefaultDirectoriesDialog::printedThumbnailsDirectory;
+QString LAUDefaultDirectoriesDialog::warpedThumbnailsDirectory;
 
 /****************************************************************************/
 /****************************************************************************/
@@ -29,6 +30,7 @@ LAUDefaultDirectoriesDialog::LAUDefaultDirectoriesDialog(QWidget *parent) : QDia
     keys << QString("Prestine Thumbnail Directory");
     keys << QString("Printed Sheets Directory");
     keys << QString("Printed Thumbnails Directory");
+    keys << QString("Warped Thumbnails Directory");
 
     QStringList tags;
     tags << sourceImageDirectory;
@@ -36,6 +38,7 @@ LAUDefaultDirectoriesDialog::LAUDefaultDirectoriesDialog(QWidget *parent) : QDia
     tags << prestineThumbnailDirectory;
     tags << printedSheetsDirectory;
     tags << printedThumbnailsDirectory;
+    tags << warpedThumbnailsDirectory;
 
     widget = new LAUDefaultDirectoriesWidget(keys, tags);
     this->layout()->addWidget(widget);
@@ -57,7 +60,9 @@ bool LAUDefaultDirectoriesDialog::isValid()
             if (QDir().exists(prestineThumbnailDirectory)) {
                 if (QDir().exists(printedSheetsDirectory)) {
                     if (QDir().exists(printedThumbnailsDirectory)) {
-                        return (true);
+                        if (QDir().exists(warpedThumbnailsDirectory)) {
+                            return (true);
+                        }
                     }
                 }
             }
@@ -96,6 +101,11 @@ void LAUDefaultDirectoriesDialog::load()
     if (QDir().exists(printedThumbnailsDirectory) == false) {
         printedThumbnailsDirectory = QString();
     }
+
+    warpedThumbnailsDirectory = settings.value(QString("LAUDefaultDirectoriesDialog::warpedThumbnailsDirectory"), warpedThumbnailsDirectory).toString();
+    if (QDir().exists(warpedThumbnailsDirectory) == false) {
+        warpedThumbnailsDirectory = QString();
+    }
 }
 
 /****************************************************************************/
@@ -109,6 +119,7 @@ void LAUDefaultDirectoriesDialog::save()
     settings.setValue(QString("LAUDefaultDirectoriesDialog::prestineThumbnailDirectory"), prestineThumbnailDirectory);
     settings.setValue(QString("LAUDefaultDirectoriesDialog::printedSheetsDirectory"), printedSheetsDirectory);
     settings.setValue(QString("LAUDefaultDirectoriesDialog::printedThumbnailsDirectory"), printedThumbnailsDirectory);
+    settings.setValue(QString("LAUDefaultDirectoriesDialog::warpedThumbnailsDirectory"), warpedThumbnailsDirectory);
 }
 
 /****************************************************************************/
@@ -122,6 +133,7 @@ void LAUDefaultDirectoriesDialog::accept()
     prestineThumbnailDirectory = tags.at(2);
     printedSheetsDirectory = tags.at(3);
     printedThumbnailsDirectory = tags.at(4);
+    warpedThumbnailsDirectory = tags.at(5);
     save();
 
     QDialog::accept();

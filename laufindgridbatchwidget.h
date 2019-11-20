@@ -16,6 +16,7 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLTexture>
 #include <QDesktopWidget>
+#include <QProgressDialog>
 #include <QGuiApplication>
 #include <QDialogButtonBox>
 #include <QCoreApplication>
@@ -38,9 +39,37 @@ class LAUFindGridBatchDialog : public QDialog
 public:
     explicit LAUFindGridBatchDialog(QStringList strings, QWidget *parent = nullptr);
 
+    ~LAUFindGridBatchDialog()
+    {
+        if (progress) {
+            delete progress;
+        }
+    }
+
     bool isValid()
     {
         return (sinkName.isEmpty() == false);
+    }
+
+    void setPrintedWidth(double val)
+    {
+        if (widget) {
+            widget->setPrintedWidth(val);
+        }
+    }
+
+    void setPrintedHeight(double val)
+    {
+        if (widget) {
+            widget->setPrintedHeight(val);
+        }
+    }
+
+    void setPrintedResolution(double val)
+    {
+        if (widget) {
+            widget->setPrintedResolution(val);
+        }
     }
 
     void setRows(int val)
@@ -65,10 +94,13 @@ public slots:
 
     void onUpdateObject(LAUMemoryObject obj = LAUMemoryObject());
 
+protected:
+    void showEvent(QShowEvent *);
+
 private:
     int counter;
     bool abortFlag;
-    QProgressBar *progress;
+    QProgressDialog *progress;
     QDialogButtonBox *buttonBox;
     QStringList filenames;
     QString sourceImageDirectory, sinkName;
