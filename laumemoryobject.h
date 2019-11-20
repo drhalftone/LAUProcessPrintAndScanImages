@@ -137,7 +137,7 @@ public:
     bool save(libtiff::TIFF *otTiff, unsigned short index = 0);
     bool load(libtiff::TIFF *inTiff, unsigned short index = 0);
 
-    cv::Mat toMat();
+    cv::Mat toMat(bool deep = false);
     QImage preview();
     LAUMemoryObject crop(unsigned int wdth, unsigned int hght) const
     {

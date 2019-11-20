@@ -34,6 +34,7 @@ public:
         return (objectB);
     }
 
+    static LAUMemoryObject matchByReduction(LAUMemoryObject objA, LAUMemoryObject objB);
     static LAUMemoryObject match(LAUMemoryObject objA, LAUMemoryObject objB);
     static QMatrix3x3 homography(LAUMemoryObject objA, LAUMemoryObject objB);
 
@@ -141,7 +142,7 @@ public slots:
 protected:
     void accept()
     {
-        LAUMemoryObject object = widget->match(widget->leftObject(), widget->rightObject());
+        LAUMemoryObject object = widget->matchByReduction(widget->leftObject(), widget->rightObject());
         if (LAUObjectMatchPreview(object, widget->rightObject()).exec() == QDialog::Accepted) {
             if (object.save()) {
                 QDialog::accept();

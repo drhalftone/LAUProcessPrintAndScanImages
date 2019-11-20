@@ -30,9 +30,6 @@ int main(int argc, char *argv[])
 
     LAUDefaultDirectoriesDialog::load();
 
-    //LAUImageMatchDialog k(LAUMemoryObject(QString("/Volumes/StickIT II/PrintedThumbnails/printedThumbnail00000.tif")), LAUMemoryObject(QString("/Volumes/StickIT II/PrestineThumbnails/prestineThumbnail00000.tif")));
-    //return k.exec();
-
     LAUWidgetMenu w;
     w.show();
     return (a.exec());

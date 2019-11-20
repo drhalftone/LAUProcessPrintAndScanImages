@@ -483,46 +483,108 @@ bool LAUMemoryObject::load(TIFF *inTiff, unsigned short index)
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-cv::Mat LAUMemoryObject::toMat()
+cv::Mat LAUMemoryObject::toMat(bool deep)
 {
-    if (depth() == sizeof(unsigned char)) {
-        switch (colors()) {
-            case 1:
-                return (cv::Mat((int)height(), (int)width(), CV_8UC1, constPointer(), step()));
-            case 2:
-                return (cv::Mat((int)height(), (int)width(), CV_8UC2, constPointer(), step()));
-            case 3:
-                return (cv::Mat((int)height(), (int)width(), CV_8UC3, constPointer(), step()));
-            case 4:
-                return (cv::Mat((int)height(), (int)width(), CV_8UC4, constPointer(), step()));
-            default:
-                return (cv::Mat());
+    if (deep) {
+        cv::Mat mat;
+        if (depth() == sizeof(unsigned char)) {
+            switch (colors()) {
+                case 1:
+                    mat = cv::Mat((int)height(), (int)width(), CV_8UC1);
+                    break;
+                case 2:
+                    mat = cv::Mat((int)height(), (int)width(), CV_8UC2);
+                    break;
+                case 3:
+                    mat = cv::Mat((int)height(), (int)width(), CV_8UC3);
+                    break;
+                case 4:
+                    mat = cv::Mat((int)height(), (int)width(), CV_8UC4);
+                    break;
+                default:
+                    return (cv::Mat());
+            }
+        } else if (depth() == sizeof(unsigned short)) {
+            switch (colors()) {
+                case 1:
+                    mat = cv::Mat((int)height(), (int)width(), CV_16UC1);
+                    break;
+                case 2:
+                    mat = cv::Mat((int)height(), (int)width(), CV_16UC2);
+                    break;
+                case 3:
+                    mat = cv::Mat((int)height(), (int)width(), CV_16UC3);
+                    break;
+                case 4:
+                    mat = cv::Mat((int)height(), (int)width(), CV_16UC4);
+                    break;
+                default:
+                    return (cv::Mat());
+            }
+        } else if (depth() == sizeof(float)) {
+            switch (colors()) {
+                case 1:
+                    mat = cv::Mat((int)height(), (int)width(), CV_32FC1);
+                    break;
+                case 2:
+                    mat = cv::Mat((int)height(), (int)width(), CV_32FC2);
+                    break;
+                case 3:
+                    mat = cv::Mat((int)height(), (int)width(), CV_32FC3);
+                    break;
+                case 4:
+                    mat = cv::Mat((int)height(), (int)width(), CV_32FC4);
+                    break;
+                default:
+                    return (cv::Mat());
+            }
         }
-    } else if (depth() == sizeof(unsigned short)) {
-        switch (colors()) {
-            case 1:
-                return (cv::Mat((int)height(), (int)width(), CV_16UC1, constPointer(), step()));
-            case 2:
-                return (cv::Mat((int)height(), (int)width(), CV_16UC2, constPointer(), step()));
-            case 3:
-                return (cv::Mat((int)height(), (int)width(), CV_16UC3, constPointer(), step()));
-            case 4:
-                return (cv::Mat((int)height(), (int)width(), CV_16UC4, constPointer(), step()));
-            default:
-                return (cv::Mat());
+
+        // PERFORM A DEEP COPY IF REQUESTED BY USER
+        for (unsigned int row = 0; row < height(); row++) {
+            memcpy(mat.ptr((int)row), constScanLine(row), step());
         }
-    } else if (depth() == sizeof(float)) {
-        switch (colors()) {
-            case 1:
-                return (cv::Mat((int)height(), (int)width(), CV_32FC1, constPointer(), step()));
-            case 2:
-                return (cv::Mat((int)height(), (int)width(), CV_32FC2, constPointer(), step()));
-            case 3:
-                return (cv::Mat((int)height(), (int)width(), CV_32FC3, constPointer(), step()));
-            case 4:
-                return (cv::Mat((int)height(), (int)width(), CV_32FC4, constPointer(), step()));
-            default:
-                return (cv::Mat());
+        return (mat);
+    } else {
+        if (depth() == sizeof(unsigned char)) {
+            switch (colors()) {
+                case 1:
+                    return (cv::Mat((int)height(), (int)width(), CV_8UC1, constPointer(), step()));
+                case 2:
+                    return (cv::Mat((int)height(), (int)width(), CV_8UC2, constPointer(), step()));
+                case 3:
+                    return (cv::Mat((int)height(), (int)width(), CV_8UC3, constPointer(), step()));
+                case 4:
+                    return (cv::Mat((int)height(), (int)width(), CV_8UC4, constPointer(), step()));
+                default:
+                    return (cv::Mat());
+            }
+        } else if (depth() == sizeof(unsigned short)) {
+            switch (colors()) {
+                case 1:
+                    return (cv::Mat((int)height(), (int)width(), CV_16UC1, constPointer(), step()));
+                case 2:
+                    return (cv::Mat((int)height(), (int)width(), CV_16UC2, constPointer(), step()));
+                case 3:
+                    return (cv::Mat((int)height(), (int)width(), CV_16UC3, constPointer(), step()));
+                case 4:
+                    return (cv::Mat((int)height(), (int)width(), CV_16UC4, constPointer(), step()));
+                default:
+                    return (cv::Mat());
+            }
+        } else if (depth() == sizeof(float)) {
+            switch (colors()) {
+                case 1:
+                    return (cv::Mat((int)height(), (int)width(), CV_32FC1, constPointer(), step()));
+                case 2:
+                    return (cv::Mat((int)height(), (int)width(), CV_32FC2, constPointer(), step()));
+                case 3:
+                    return (cv::Mat((int)height(), (int)width(), CV_32FC3, constPointer(), step()));
+                case 4:
+                    return (cv::Mat((int)height(), (int)width(), CV_32FC4, constPointer(), step()));
+                default:
+                    return (cv::Mat());
+            }
         }
     }
     return (cv::Mat());

@@ -183,6 +183,51 @@ LAUMemoryObject LAUImageMatchingWidget::match(LAUMemoryObject objA, LAUMemoryObj
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
+LAUMemoryObject LAUImageMatchingWidget::matchByReduction(LAUMemoryObject objA, LAUMemoryObject objB)
+{
+    Mat imgA, imgB;
+
+    imgA = objB.toMat(true);
+    if (objB.colors() == 3) {
+        cvtColor(imgA, imgB, COLOR_RGB2GRAY);
+    } else if (objB.colors() == 4) {
+        cvtColor(imgA, imgB, COLOR_RGBA2GRAY);
+    }
+    Mat imgX, imgY;
+    reduce(imgB, imgX, 0, REDUCE_AVG, CV_32SC1);
+    reduce(imgB, imgY, 1, REDUCE_AVG, CV_32SC1);
+
+    int lftEdge = imgX.cols - 1, rghEdge = 0;
+    for (int n = 0; n < imgX.cols; n++) {
+        if (imgX.at<int>(n) < 180) {
+            lftEdge = qMin(n, lftEdge);
+            rghEdge = qMax(n, rghEdge);
+        }
+    }
+
+    int topEdge = imgY.rows - 1, botEdge = 0;
+    for (int n = 0; n < imgY.rows; n++) {
+        if (imgY.at<int>(n) < 180) {
+            topEdge = qMin(n, topEdge);
+            botEdge = qMax(n, botEdge);
+        }
+    }
+
+    if ((rghEdge - lftEdge) > 100 && (botEdge - topEdge) > 100) {
+        imgB = imgA.rowRange(topEdge + 1, botEdge - 1).colRange(lftEdge + 1, rghEdge - 1);
+        cv::resize(imgB, imgB, cv::Size((int)objA.width(), (int)objA.height()));
+    }
+
+    LAUMemoryObject object((unsigned int)imgB.cols, (unsigned int)imgB.rows, objB.colors(), objB.depth());
+    for (unsigned int row = 0; row < object.height(); row++) {
+        memcpy(object.constScanLine(row), imgB.ptr((int)row), qMin((int)object.step(), (int)imgB.step));
+    }
+    return (object);
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
 void LAUImageMatchDialog::onBatchProcessImages()
 {
     int numFiles = qMax(printedFiles.count(), prestineFiles.count());
