@@ -4,6 +4,7 @@
 #include "lausplitimagestotiffwidget.h"
 #include "laufindgridbatchwidget.h"
 #include "lauimagematchingwidget.h"
+#include "lauapplydnnwidget.h"
 
 LAUWidgetMenu::LAUWidgetMenu(QWidget *parent) : QWidget(parent)
 {
@@ -35,6 +36,11 @@ LAUWidgetMenu::LAUWidgetMenu(QWidget *parent) : QWidget(parent)
     connect(button, SIGNAL(clicked()), this, SLOT(onButtonClicked()));
     this->layout()->addWidget(button);
     buttons << button;
+
+    button = new QPushButton(QString("Score Image"));
+    connect(button, SIGNAL(clicked()), this, SLOT(onButtonClicked()));
+    this->layout()->addWidget(button);
+    buttons << button;
 }
 
 void LAUWidgetMenu::onButtonClicked()
@@ -46,7 +52,7 @@ void LAUWidgetMenu::onButtonClicked()
             LAUDefaultDirectoriesDialog dialog;
             if (dialog.exec()) {
                 bool flag = LAUDefaultDirectoriesDialog::isValid();
-                for (int n = 1; n < buttons.count(); n++) {
+                for (int n = 1; n < buttons.count() - 1; n++) {
                     buttons.at(n)->setEnabled(flag);
                 }
             }
@@ -62,6 +68,11 @@ void LAUWidgetMenu::onButtonClicked()
             }
         } else if (string == QString("Match Images")) {
             LAUImageMatchDialog dialog;
+            if (dialog.isValid()) {
+                dialog.exec();
+            }
+        } else if (string == QString("Score Image")) {
+            LAUApplyDNNDialog dialog;
             if (dialog.isValid()) {
                 dialog.exec();
             }

@@ -23,6 +23,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG  += c++11
 
 SOURCES += main.cpp \
+           lauapplydnnwidget.cpp \
            laudefaultdirectorieswidget.cpp \
            laufindgridbatchwidget.cpp \
            laufindgridglwidget.cpp \
@@ -35,6 +36,7 @@ SOURCES += main.cpp \
            lauwidgetmenu.cpp
 
 HEADERS += laumemoryobject.h \
+           lauapplydnnwidget.h \
            laucombineimagestopdfwidget.h \
            laudefaultdirectorieswidget.h \
            laufindgridbatchwidget.h \

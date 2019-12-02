@@ -8,5 +8,11 @@
         <file>Shaders/filterFitGridX.vert</file>
         <file>Shaders/filterRotateImage.vert</file>
         <file>Shaders/filterRotateImage.frag</file>
+        <file>Shaders/displayGRAYVideo.frag</file>
+        <file>Shaders/displayGRAYVideo.vert</file>
+        <file>Shaders/DNN/waveletDecompFilter.frag</file>
+        <file>Shaders/DNN/waveletDecompFilter.vert</file>
+        <file>Shaders/DNN/waveletReconstFilter.vert</file>
+        <file>Shaders/DNN/waveletReconstFilter.frag</file>
     </qresource>
 </RCC>
