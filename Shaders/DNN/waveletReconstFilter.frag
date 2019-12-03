@@ -24,9 +24,9 @@ void main()
         int col = (position.x + qt_width + 4 - c) % qt_width;
 
         // GET THE PIXEL COORDINATE OF THE CURRENT FRAGMENT
-        qt_fragColor += LoR[c] * texelFetch(qt_texture, ivec2(col / 2, 2 * position.y + 0), 0) * float(col % 2 == 0);
+        qt_fragColor += LoR[c] * texelFetch(qt_texture, ivec2(col / 2, position.y), 0) * float(col % 2 == 0);
 
         // GET THE PIXEL COORDINATE OF THE CURRENT FRAGMENT
-        qt_fragColor += HiR[c] * texelFetch(qt_texture, ivec2(col / 2, 2 * position.y + 1), 0) * float(col % 2 == 0);
+        qt_fragColor += HiR[c] * texelFetch(qt_texture, ivec2((col + qt_width) / 2, position.y), 0) * float(col % 2 == 0);
     }
 }

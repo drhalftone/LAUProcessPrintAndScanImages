@@ -10,9 +10,11 @@
         <file>Shaders/filterRotateImage.frag</file>
         <file>Shaders/displayGRAYVideo.frag</file>
         <file>Shaders/displayGRAYVideo.vert</file>
-        <file>Shaders/DNN/waveletDecompFilter.frag</file>
-        <file>Shaders/DNN/waveletDecompFilter.vert</file>
-        <file>Shaders/DNN/waveletReconstFilter.vert</file>
+        <file>Shaders/DNN/waveletHIDecompFilter.frag</file>
+        <file>Shaders/DNN/waveletLODecompFilter.frag</file>
+        <file>Shaders/DNN/waveletHIDecompFilter.vert</file>
+        <file>Shaders/DNN/waveletLODecompFilter.vert</file>
         <file>Shaders/DNN/waveletReconstFilter.frag</file>
+        <file>Shaders/DNN/waveletReconstFilter.vert</file>
     </qresource>
 </RCC>
