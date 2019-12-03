@@ -57,381 +57,201 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
 {
     if (obj.isValid()) {
         // KEEP A LOCAL COPY OF THE INCOMING OBJECT
-        object = obj;
-
-        // MAKE THIS THE CURRENT OPENGL CONTEXT
-        makeCurrent();
-
-        // UPLOAD THE INCOMING OBJECT TO THE GPU
-        if (object.colors() == 1) {
-            if (object.depth() == sizeof(unsigned char)) {
-                objectTexture->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, (const void *)object.constPointer(), &options);
-            } else if (object.depth() == sizeof(unsigned short)) {
-                objectTexture->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, (const void *)object.constPointer(), &options);
-            } else if (object.depth() == sizeof(float)) {
-                objectTexture->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, (const void *)object.constPointer(), &options);
-            }
-        } else if (object.colors() == 3) {
-            if (object.depth() == sizeof(unsigned char)) {
-                objectTexture->setData(QOpenGLTexture::RGB, QOpenGLTexture::UInt8, (const void *)object.constPointer(), &options);
-            } else if (object.depth() == sizeof(unsigned short)) {
-                objectTexture->setData(QOpenGLTexture::RGB, QOpenGLTexture::UInt16, (const void *)object.constPointer(), &options);
-            } else if (object.depth() == sizeof(float)) {
-                objectTexture->setData(QOpenGLTexture::RGB, QOpenGLTexture::Float32, (const void *)object.constPointer(), &options);
-            }
-        } else if (object.colors() == 4) {
-            if (object.depth() == sizeof(unsigned char)) {
-                objectTexture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, (const void *)object.constPointer(), &options);
-            } else if (object.depth() == sizeof(unsigned short)) {
-                objectTexture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt16, (const void *)object.constPointer(), &options);
-            } else if (object.depth() == sizeof(float)) {
-                objectTexture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float32, (const void *)object.constPointer(), &options);
-            }
-        }
+        object = obj.crop(DWTSTEP * (obj.width() / DWTSTEP), obj.height());
 
         // MAKE SURE WE HAVE OUR FRAME BUFFER OBJECTS ALLOCATED ON THE GPU
         if (frameBufferObjectA && frameBufferObjectB && frameBufferObjectC) {
+            // MAKE THIS THE CURRENT OPENGL CONTEXT
+            makeCurrent();
+
+            // UPLOAD THE INCOMING OBJECT TO THE GPU
+            if (object.colors() == 1) {
+                if (object.depth() == sizeof(unsigned char)) {
+                    objectTexture->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt8, (const void *)object.constPointer(), &options);
+                } else if (object.depth() == sizeof(unsigned short)) {
+                    objectTexture->setData(QOpenGLTexture::Red, QOpenGLTexture::UInt16, (const void *)object.constPointer(), &options);
+                } else if (object.depth() == sizeof(float)) {
+                    objectTexture->setData(QOpenGLTexture::Red, QOpenGLTexture::Float32, (const void *)object.constPointer(), &options);
+                }
+            } else if (object.colors() == 3) {
+                if (object.depth() == sizeof(unsigned char)) {
+                    objectTexture->setData(QOpenGLTexture::RGB, QOpenGLTexture::UInt8, (const void *)object.constPointer(), &options);
+                } else if (object.depth() == sizeof(unsigned short)) {
+                    objectTexture->setData(QOpenGLTexture::RGB, QOpenGLTexture::UInt16, (const void *)object.constPointer(), &options);
+                } else if (object.depth() == sizeof(float)) {
+                    objectTexture->setData(QOpenGLTexture::RGB, QOpenGLTexture::Float32, (const void *)object.constPointer(), &options);
+                }
+            } else if (object.colors() == 4) {
+                if (object.depth() == sizeof(unsigned char)) {
+                    objectTexture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt8, (const void *)object.constPointer(), &options);
+                } else if (object.depth() == sizeof(unsigned short)) {
+                    objectTexture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::UInt16, (const void *)object.constPointer(), &options);
+                } else if (object.depth() == sizeof(float)) {
+                    objectTexture->setData(QOpenGLTexture::RGBA, QOpenGLTexture::Float32, (const void *)object.constPointer(), &options);
+                }
+            }
+
             // BIND FRAMEBUFFER A TO HOLD THE FIRST LEVEL WAVELET DECOMPOSITION
             if (frameBufferObjectA->bind()) {
-                // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
-                glEnable(GL_SCISSOR_TEST);
-
                 // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-                glViewport(0, 0, frameBufferObjectA->width() / 2, frameBufferObjectA->height());
-                glScissor(0, 0, frameBufferObjectA->width() / 2, frameBufferObjectA->height());
+                glViewport(0, 0, frameBufferObjectA->width(), frameBufferObjectA->height());
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                if (progLoD.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
+                if (program.bind()) {
                     if (quadVertexBuffer.bind()) {
                         if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
+                            // SET THE ACTIVE TEXTURE ON THE GPU
                             glActiveTexture(GL_TEXTURE0);
                             objectTexture->bind();
-                            progLoD.setUniformValue("qt_texture", 0);
-                            progLoD.setUniformValue("qt_width", objectTexture->width());
+                            program.setUniformValue("qt_texture", 0);
 
                             // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progLoD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progLoD.enableAttributeArray("qt_vertex");
+                            program.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
+                            program.enableAttributeArray("qt_vertex");
 
                             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
                             quadIndexBuffer.release();
                         }
                         quadVertexBuffer.release();
                     }
-                    progLoD.release();
-                }
-
-                // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-                glViewport(frameBufferObjectA->width() / 2, 0, frameBufferObjectA->width() / 2, frameBufferObjectA->height());
-                glScissor(frameBufferObjectA->width() / 2, 0, frameBufferObjectA->width() / 2, frameBufferObjectA->height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                if (progHiD.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
-                    if (quadVertexBuffer.bind()) {
-                        if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
-                            glActiveTexture(GL_TEXTURE0);
-                            objectTexture->bind();
-                            progHiD.setUniformValue("qt_texture", 0);
-                            progHiD.setUniformValue("qt_width", objectTexture->width());
-
-                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progHiD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progHiD.enableAttributeArray("qt_vertex");
-
-                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
-                            quadIndexBuffer.release();
-                        }
-                        quadVertexBuffer.release();
-                    }
-                    progHiD.release();
+                    program.release();
                 }
                 frameBufferObjectA->release();
-
-                // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
-                glDisable(GL_SCISSOR_TEST);
-
-                // COPY OVER FRAMEBUFFER A TO FRAMEBUFFER B
-                QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectB, frameBufferObjectA);
             }
 
-            // BIND FRAMEBUFFER B TO HOLD THE SECOND LEVEL WAVELET DECOMPOSITION
-            if (frameBufferObjectB->bind()) {
-                // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
-                glEnable(GL_SCISSOR_TEST);
+            for (int lvl = 0; lvl < DWTLEVELS; lvl++) {
+                // CALCULATE WINDOW SCALE FACTOR
+                int sclFactorB = 1 << lvl;
+                int sclFactorA = sclFactorB << 1;
 
-                // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-                glViewport(0, 0, frameBufferObjectB->width() / 4, frameBufferObjectB->height());
-                glScissor(0, 0, frameBufferObjectB->width() / 4, frameBufferObjectB->height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                // BIND FRAMEBUFFER A TO HOLD THE FIRST LEVEL WAVELET DECOMPOSITION
+                if (frameBufferObjectB->bind()) {
+                    // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
+                    glEnable(GL_SCISSOR_TEST);
 
-                if (progLoD.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
-                    if (quadVertexBuffer.bind()) {
-                        if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
-                            glActiveTexture(GL_TEXTURE0);
-                            glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
-                            progLoD.setUniformValue("qt_texture", 0);
-                            progLoD.setUniformValue("qt_width", frameBufferObjectA->width() / 2);
+                    // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
+                    glViewport(0, 0, frameBufferObjectB->width() / sclFactorA, frameBufferObjectB->height());
+                    glScissor(0, 0, frameBufferObjectB->width() / sclFactorA, frameBufferObjectB->height());
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progLoD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progLoD.enableAttributeArray("qt_vertex");
+                    if (progLoD.bind()) {
+                        // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
+                        if (quadVertexBuffer.bind()) {
+                            if (quadIndexBuffer.bind()) {
+                                // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
+                                glActiveTexture(GL_TEXTURE0);
+                                glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+                                progLoD.setUniformValue("qt_texture", 0);
+                                progLoD.setUniformValue("qt_width", frameBufferObjectA->width() / sclFactorB);
 
-                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+                                // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
+                                progLoD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
+                                progLoD.enableAttributeArray("qt_vertex");
 
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
-                            quadIndexBuffer.release();
+                                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+                                // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
+                                quadIndexBuffer.release();
+                            }
+                            quadVertexBuffer.release();
                         }
-                        quadVertexBuffer.release();
+                        progLoD.release();
                     }
-                    progLoD.release();
-                }
 
-                // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-                glViewport(frameBufferObjectB->width() / 4, 0, frameBufferObjectB->width() / 4, frameBufferObjectB->height());
-                glScissor(frameBufferObjectB->width() / 4, 0, frameBufferObjectB->width() / 4, frameBufferObjectB->height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
+                    glViewport(frameBufferObjectB->width() / sclFactorA, 0, frameBufferObjectB->width() / sclFactorA, frameBufferObjectB->height());
+                    glScissor(frameBufferObjectB->width() / sclFactorA, 0, frameBufferObjectB->width() / sclFactorA, frameBufferObjectB->height());
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                if (progHiD.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
-                    if (quadVertexBuffer.bind()) {
-                        if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
-                            glActiveTexture(GL_TEXTURE0);
-                            glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
-                            progHiD.setUniformValue("qt_texture", 0);
-                            progHiD.setUniformValue("qt_width", frameBufferObjectA->width() / 2);
+                    if (progHiD.bind()) {
+                        // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
+                        if (quadVertexBuffer.bind()) {
+                            if (quadIndexBuffer.bind()) {
+                                // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
+                                glActiveTexture(GL_TEXTURE0);
+                                glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+                                progHiD.setUniformValue("qt_texture", 0);
+                                progHiD.setUniformValue("qt_width", frameBufferObjectA->width() / sclFactorB);
 
-                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progHiD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progHiD.enableAttributeArray("qt_vertex");
+                                // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
+                                progHiD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
+                                progHiD.enableAttributeArray("qt_vertex");
 
-                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+                                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
-                            quadIndexBuffer.release();
+                                // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
+                                quadIndexBuffer.release();
+                            }
+                            quadVertexBuffer.release();
                         }
-                        quadVertexBuffer.release();
+                        progHiD.release();
                     }
-                    progHiD.release();
+                    frameBufferObjectB->release();
+
+                    // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
+                    glDisable(GL_SCISSOR_TEST);
+
+                    // COPY OVER FRAMEBUFFER A TO FRAMEBUFFER B
+                    QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectA, frameBufferObjectB);
                 }
-                frameBufferObjectB->release();
-
-                // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
-                glDisable(GL_SCISSOR_TEST);
-
-                // COPY OVER FRAMEBUFFER A TO FRAMEBUFFER B
-                QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectC, frameBufferObjectB);
             }
 
-            // BIND FRAMEBUFFER C TO HOLD THE THIRD LEVEL WAVELET DECOMPOSITION
-            if (frameBufferObjectC->bind()) {
-                // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
-                glEnable(GL_SCISSOR_TEST);
+            for (int lvl = DWTLEVELS - 1; lvl > -1; lvl--) {
+                // CALCULATE WINDOW SCALE FACTOR
+                int sclFactorB = 1 << lvl;
+                int sclFactorA = sclFactorB << 1;
 
-                // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-                glViewport(0, 0, frameBufferObjectC->width() / 8, frameBufferObjectC->height());
-                glScissor(0, 0, frameBufferObjectC->width() / 8, frameBufferObjectC->height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                // BIND FRAMEBUFFER A TO HOLD THE FIRST LEVEL WAVELET DECOMPOSITION
+                if (frameBufferObjectB->bind()) {
+                    // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
+                    glEnable(GL_SCISSOR_TEST);
 
-                if (progLoD.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
-                    if (quadVertexBuffer.bind()) {
-                        if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
-                            glActiveTexture(GL_TEXTURE0);
-                            glBindTexture(GL_TEXTURE_2D, frameBufferObjectB->texture());
-                            progLoD.setUniformValue("qt_texture", 0);
-                            progLoD.setUniformValue("qt_width", frameBufferObjectB->width() / 4);
+                    // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
+                    glViewport(0, 0, frameBufferObjectB->width() / sclFactorB, frameBufferObjectB->height());
+                    glScissor(0, 0, frameBufferObjectB->width() / sclFactorB, frameBufferObjectB->height());
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progLoD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progLoD.enableAttributeArray("qt_vertex");
+                    if (progRecon.bind()) {
+                        // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
+                        if (quadVertexBuffer.bind()) {
+                            if (quadIndexBuffer.bind()) {
+                                // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
+                                glActiveTexture(GL_TEXTURE0);
+                                glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+                                progRecon.setUniformValue("qt_texture", 0);
+                                progRecon.setUniformValue("qt_width", frameBufferObjectA->width() / sclFactorB);
 
-                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+                                // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
+                                progRecon.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
+                                progRecon.enableAttributeArray("qt_vertex");
 
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
-                            quadIndexBuffer.release();
+                                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+                                // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
+                                quadIndexBuffer.release();
+                            }
+                            quadVertexBuffer.release();
                         }
-                        quadVertexBuffer.release();
+                        progRecon.release();
                     }
-                    progLoD.release();
+
+                    // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
+                    glDisable(GL_SCISSOR_TEST);
+
+                    // COPY OVER FRAMEBUFFER A TO FRAMEBUFFER B
+                    QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectA, frameBufferObjectB);
                 }
-
-                // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-                glViewport(frameBufferObjectC->width() / 8, 0, frameBufferObjectC->width() / 8, frameBufferObjectC->height());
-                glScissor(frameBufferObjectC->width() / 8, 0, frameBufferObjectC->width() / 8, frameBufferObjectC->height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                if (progHiD.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
-                    if (quadVertexBuffer.bind()) {
-                        if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
-                            glActiveTexture(GL_TEXTURE0);
-                            glBindTexture(GL_TEXTURE_2D, frameBufferObjectB->texture());
-                            progHiD.setUniformValue("qt_texture", 0);
-                            progHiD.setUniformValue("qt_width", frameBufferObjectB->width() / 4);
-
-                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progHiD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progHiD.enableAttributeArray("qt_vertex");
-
-                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
-                            quadIndexBuffer.release();
-                        }
-                        quadVertexBuffer.release();
-                    }
-                    progHiD.release();
-                }
-                frameBufferObjectC->release();
-
-                // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
-                glDisable(GL_SCISSOR_TEST);
             }
 
-            // BIND FRAMEBUFFER B TO HOLD THE SECOND LEVEL WAVELET DECOMPOSITION
-            if (frameBufferObjectB->bind()) {
-                // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
-                glEnable(GL_SCISSOR_TEST);
+            //LAUMemoryObject obj(frameBufferObjectA->width(), frameBufferObjectA->height(), 4, sizeof(float));
+            //glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+            //glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
+            //obj.save(QString("/tmp/objectA.tif"));
 
-                // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-                glViewport(0, 0, frameBufferObjectB->width() / 4, frameBufferObjectB->height());
-                glScissor(0, 0, frameBufferObjectB->width() / 4, frameBufferObjectB->height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                if (progRecon.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
-                    if (quadVertexBuffer.bind()) {
-                        if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
-                            glActiveTexture(GL_TEXTURE0);
-                            glBindTexture(GL_TEXTURE_2D, frameBufferObjectC->texture());
-                            progRecon.setUniformValue("qt_texture", 0);
-                            progRecon.setUniformValue("qt_width", frameBufferObjectC->width() / 4);
-
-                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progRecon.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progRecon.enableAttributeArray("qt_vertex");
-
-                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
-                            quadIndexBuffer.release();
-                        }
-                        quadVertexBuffer.release();
-                    }
-                    progRecon.release();
-                }
-
-                // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
-                glDisable(GL_SCISSOR_TEST);
-            }
-
-            // BIND FRAMEBUFFER B TO HOLD THE SECOND LEVEL WAVELET DECOMPOSITION
-            if (frameBufferObjectA->bind()) {
-                // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
-                glEnable(GL_SCISSOR_TEST);
-
-                // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-                glViewport(0, 0, frameBufferObjectA->width() / 2, frameBufferObjectA->height());
-                glScissor(0, 0, frameBufferObjectA->width() / 2, frameBufferObjectA->height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                if (progRecon.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
-                    if (quadVertexBuffer.bind()) {
-                        if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
-                            glActiveTexture(GL_TEXTURE0);
-                            glBindTexture(GL_TEXTURE_2D, frameBufferObjectB->texture());
-                            progRecon.setUniformValue("qt_texture", 0);
-                            progRecon.setUniformValue("qt_width", frameBufferObjectB->width() / 2);
-
-                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progRecon.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progRecon.enableAttributeArray("qt_vertex");
-
-                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
-                            quadIndexBuffer.release();
-                        }
-                        quadVertexBuffer.release();
-                    }
-                    progRecon.release();
-                }
-
-                // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
-                glDisable(GL_SCISSOR_TEST);
-            }
-
-            // BIND FRAMEBUFFER D TO HOLD THE RECONSTITUTED FIRST LEVEL WAVELET DECOMPOSITION
-            if (frameBufferObjectD->bind()) {
-                // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
-                glEnable(GL_SCISSOR_TEST);
-
-                // CLEAR THE FRAME BUFFER OBJECT
-                glViewport(0, 0, frameBufferObjectD->width(), frameBufferObjectD->height());
-                glScissor(0, 0, frameBufferObjectD->width(), frameBufferObjectD->height());
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                if (progRecon.bind()) {
-                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
-                    if (quadVertexBuffer.bind()) {
-                        if (quadIndexBuffer.bind()) {
-                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
-                            glActiveTexture(GL_TEXTURE0);
-                            glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
-                            progRecon.setUniformValue("qt_texture", 0);
-                            progRecon.setUniformValue("qt_width", frameBufferObjectA->width());
-
-                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
-                            progRecon.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
-                            progRecon.enableAttributeArray("qt_vertex");
-
-                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
-                            quadIndexBuffer.release();
-                        }
-                        quadVertexBuffer.release();
-                    }
-                    progRecon.release();
-                }
-                frameBufferObjectD->release();
-
-                // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
-                glDisable(GL_SCISSOR_TEST);
-            }
-
-            LAUMemoryObject obj(frameBufferObjectA->width(), frameBufferObjectA->height(), 4, sizeof(float));
-            glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
-            obj.save(QString("/tmp/objectA.tif"));
-
-            glBindTexture(GL_TEXTURE_2D, frameBufferObjectB->texture());
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
-            obj.save(QString("/tmp/objectB.tif"));
-
-            glBindTexture(GL_TEXTURE_2D, frameBufferObjectC->texture());
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
-            obj.save(QString("/tmp/objectC.tif"));
-
-            glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
-            obj.save(QString("/tmp/objectD.tif"));
+            //glBindTexture(GL_TEXTURE_2D, frameBufferObjectB->texture());
+            //glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
+            //obj.save(QString("/tmp/objectB.tif"));
         }
     }
 }
@@ -515,7 +335,7 @@ void LAUApplyDNNGLWidget::initializeGL()
 
     // CREATE TEXTURE FOR DISPLAYING NO VIDEO SCREEN
     objectTexture = new QOpenGLTexture(QOpenGLTexture::Target2D);
-    objectTexture->setSize((int)object.width(), (int)object.height());
+    objectTexture->setSize(DWTSTEP * ((int)object.width() / DWTSTEP), (int)object.height());
     objectTexture->setFormat(QOpenGLTexture::RGBA32F);
     objectTexture->setWrapMode(QOpenGLTexture::ClampToBorder);
     objectTexture->setMinificationFilter(QOpenGLTexture::Linear);
@@ -528,13 +348,13 @@ void LAUApplyDNNGLWidget::initializeGL()
     frameBufferObjectFormat.setInternalTextureFormat(GL_RGBA32F);
 
     // CREATE NEW FRAME BUFFER OBJECTS
-    frameBufferObjectA = new QOpenGLFramebufferObject((int)object.width(), (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectA = new QOpenGLFramebufferObject(DWTSTEP * ((int)object.width() / DWTSTEP), (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectA->release();
-    frameBufferObjectB = new QOpenGLFramebufferObject((int)object.width(), (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectB = new QOpenGLFramebufferObject(DWTSTEP * ((int)object.width() / DWTSTEP), (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectB->release();
-    frameBufferObjectC = new QOpenGLFramebufferObject((int)object.width(), (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectC = new QOpenGLFramebufferObject(DWTSTEP * ((int)object.width() / DWTSTEP), (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectC->release();
-    frameBufferObjectD = new QOpenGLFramebufferObject((int)object.width(), (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectD = new QOpenGLFramebufferObject(DWTSTEP * ((int)object.width() / DWTSTEP), (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectD->release();
 
     // CREATE SHADERS
@@ -590,13 +410,13 @@ void LAUApplyDNNGLWidget::paintGL()
     glViewport(0, 0, localWidth, localHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (frameBufferObjectD) {
+    if (frameBufferObjectA) {
         if (program.bind()) {
             if (quadVertexBuffer.bind()) {
                 if (quadIndexBuffer.bind()) {
                     // SET THE ACTIVE TEXTURE ON THE GPU
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
                     program.setUniformValue("qt_texture", 0);
 
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
@@ -640,7 +460,20 @@ void LAUApplyDNNGLWidget::paintGL()
 /****************************************************************************/
 LAUMemoryObject LAUApplyDNNGLWidget::result()
 {
-    return (object);
+    // MAKE SURE WE HAVE AN FBO TO READ FROM
+    if (frameBufferObjectA) {
+        // MAKE THIS THE CURRENT OPENGL CONTEXT
+        makeCurrent();
+
+        // CREATE A MEMORY OBJECT AND DOWNLOAD FRAME BUFFER OBJECT TO IT
+        LAUMemoryObject obj(frameBufferObjectA->width(), frameBufferObjectA->height(), 4, sizeof(float));
+        glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
+
+        // RETURN OUR CPU MEMORY TO THE USER
+        return (obj);
+    }
+    return (LAUMemoryObject());
 }
 
 /****************************************************************************/
