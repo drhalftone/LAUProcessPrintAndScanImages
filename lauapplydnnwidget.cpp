@@ -11,7 +11,7 @@
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-LAUApplyDNNGLWidget::LAUApplyDNNGLWidget(LAUMemoryObject obj, QWidget *parent) : QOpenGLWidget(parent), object(obj), objectTexture(nullptr), frameBufferObjectA(nullptr), frameBufferObjectB(nullptr), frameBufferObjectC(nullptr)
+LAUApplyDNNGLWidget::LAUApplyDNNGLWidget(LAUMemoryObject obj, QWidget *parent) : QOpenGLWidget(parent), object(obj), objectTexture(nullptr), frameBufferObjectA(nullptr), frameBufferObjectB(nullptr), frameBufferObjectC(nullptr), frameBufferObjectD(nullptr)
 {
     options.setAlignment(1);
     setFocusPolicy(Qt::StrongFocus);
@@ -39,6 +39,9 @@ LAUApplyDNNGLWidget::~LAUApplyDNNGLWidget()
         }
         if (frameBufferObjectC) {
             delete frameBufferObjectC;
+        }
+        if (frameBufferObjectD) {
+            delete frameBufferObjectD;
         }
 
         if (vertexArrayObject.isCreated()) {
@@ -91,7 +94,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
             // BIND FRAMEBUFFER A TO HOLD THE FIRST LEVEL WAVELET DECOMPOSITION
             if (frameBufferObjectA->bind()) {
                 // CLEAR THE FRAME BUFFER OBJECT
-                glViewport(0, 0, frameBufferObjectA->width(), frameBufferObjectA->height());
+                glViewport(0, 0, frameBufferObjectA->width() / 2, frameBufferObjectA->height());
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 if (programB.bind()) {
@@ -103,6 +106,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
                             objectTexture->bind();
                             programB.setUniformValue("qt_texture", 0);
                             programB.setUniformValue("qt_rowStep", 1);
+                            programB.setUniformValue("qt_width", objectTexture->width());
 
                             // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                             programB.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
@@ -123,7 +127,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
             // BIND FRAMEBUFFER B TO HOLD THE SECOND LEVEL WAVELET DECOMPOSITION
             if (frameBufferObjectB->bind()) {
                 // CLEAR THE FRAME BUFFER OBJECT
-                glViewport(0, 0, frameBufferObjectB->width(), frameBufferObjectB->height());
+                glViewport(0, 0, frameBufferObjectB->width() / 4, frameBufferObjectB->height());
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 if (programB.bind()) {
@@ -135,7 +139,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
                             glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
                             programB.setUniformValue("qt_texture", 0);
                             programB.setUniformValue("qt_rowStep", 2);
-                            programB.setUniformValue("qt_colScle", 2);
+                            programB.setUniformValue("qt_width", frameBufferObjectA->width() / 2);
 
                             // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                             programB.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
@@ -156,7 +160,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
             // BIND FRAMEBUFFER C TO HOLD THE THIRD LEVEL WAVELET DECOMPOSITION
             if (frameBufferObjectC->bind()) {
                 // CLEAR THE FRAME BUFFER OBJECT
-                glViewport(0, 0, frameBufferObjectC->width(), frameBufferObjectC->height());
+                glViewport(0, 0, frameBufferObjectC->width() / 8, frameBufferObjectC->height());
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 if (programB.bind()) {
@@ -168,7 +172,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
                             glBindTexture(GL_TEXTURE_2D, frameBufferObjectB->texture());
                             programB.setUniformValue("qt_texture", 0);
                             programB.setUniformValue("qt_rowStep", 2);
-                            programB.setUniformValue("qt_colScle", 4);
+                            programB.setUniformValue("qt_width", frameBufferObjectB->width() / 4);
 
                             // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                             programB.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
@@ -185,12 +189,56 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
                 }
                 frameBufferObjectC->release();
             }
-        }
 
-        LAUMemoryObject obj(frameBufferObjectC->width(), frameBufferObjectC->height(), 4, sizeof(float));
-        glBindTexture(GL_TEXTURE_2D, frameBufferObjectC->texture());
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
-        obj.save(QString("/tmp/objectC.tif"));
+            // BIND FRAMEBUFFER D TO HOLD THE RECONSTITUTED FIRST LEVEL WAVELET DECOMPOSITION
+            if (frameBufferObjectD->bind()) {
+                // CLEAR THE FRAME BUFFER OBJECT
+                glViewport(0, 0, frameBufferObjectD->width() / 4, frameBufferObjectD->height() / 2);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                if (programC.bind()) {
+                    // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
+                    if (quadVertexBuffer.bind()) {
+                        if (quadIndexBuffer.bind()) {
+                            // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
+                            glActiveTexture(GL_TEXTURE0);
+                            glBindTexture(GL_TEXTURE_2D, frameBufferObjectC->texture());
+                            programC.setUniformValue("qt_texture", 0);
+                            programC.setUniformValue("qt_width", frameBufferObjectD->width() / 4);
+
+                            // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
+                            programC.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
+                            programC.enableAttributeArray("qt_vertex");
+
+                            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+                            // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
+                            quadIndexBuffer.release();
+                        }
+                        quadVertexBuffer.release();
+                    }
+                    programC.release();
+                }
+                frameBufferObjectD->release();
+            }
+
+            LAUMemoryObject obj(frameBufferObjectB->width(), frameBufferObjectB->height(), 4, sizeof(float));
+            glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
+            obj.save(QString("/tmp/objectA.tif"));
+
+            glBindTexture(GL_TEXTURE_2D, frameBufferObjectB->texture());
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
+            obj.save(QString("/tmp/objectB.tif"));
+
+            glBindTexture(GL_TEXTURE_2D, frameBufferObjectC->texture());
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
+            obj.save(QString("/tmp/objectC.tif"));
+
+            glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
+            obj.save(QString("/tmp/objectD.tif"));
+        }
     }
 }
 
@@ -292,6 +340,8 @@ void LAUApplyDNNGLWidget::initializeGL()
     frameBufferObjectB->release();
     frameBufferObjectC = new QOpenGLFramebufferObject((int)object.width(), 2 * (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectC->release();
+    frameBufferObjectD = new QOpenGLFramebufferObject((int)object.width(), 2 * (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectD->release();
 
     // CREATE SHADERS
     setlocale(LC_NUMERIC, "C");
@@ -342,13 +392,13 @@ void LAUApplyDNNGLWidget::paintGL()
     glViewport(0, 0, localWidth, localHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (frameBufferObjectA) {
+    if (frameBufferObjectD) {
         if (programA.bind()) {
             if (quadVertexBuffer.bind()) {
                 if (quadIndexBuffer.bind()) {
                     // SET THE ACTIVE TEXTURE ON THE GPU
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
                     programA.setUniformValue("qt_texture", 0);
 
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA

@@ -74,7 +74,8 @@ private:
     QOpenGLVertexArrayObject vertexArrayObject;
     QOpenGLTexture *objectTexture;
     QList<QOpenGLTexture *> filterTextures;
-    QOpenGLFramebufferObject *frameBufferObjectA, *frameBufferObjectB, *frameBufferObjectC;
+    QOpenGLFramebufferObject *frameBufferObjectA, *frameBufferObjectB;
+    QOpenGLFramebufferObject *frameBufferObjectC, *frameBufferObjectD;
     QOpenGLShaderProgram programA, programB, programC, programD;
 
     bool initializedFlag;
