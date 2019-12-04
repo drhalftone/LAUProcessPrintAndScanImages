@@ -109,7 +109,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
                             glActiveTexture(GL_TEXTURE0);
                             objectTexture->bind();
                             progLoD.setUniformValue("qt_texture", 0);
-                            progLoD.setUniformValue("qt_width", objectTexture->width());
+                            progLoD.setUniformValue("qt_width", frameBufferObjectA->width());
 
                             // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                             progLoD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
@@ -138,7 +138,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
                             glActiveTexture(GL_TEXTURE0);
                             objectTexture->bind();
                             progHiD.setUniformValue("qt_texture", 0);
-                            progHiD.setUniformValue("qt_width", objectTexture->width());
+                            progHiD.setUniformValue("qt_width", frameBufferObjectA->width());
 
                             // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                             progHiD.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
@@ -296,6 +296,20 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
                     progHiD.release();
                 }
                 frameBufferObjectC->release();
+
+                // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
+                glDisable(GL_SCISSOR_TEST);
+            }
+
+            // APPLY A LOW PASS FILTER BY CLEARING THE LOWEST DFT COEFFICIENTS
+            if (frameBufferObjectC->bind()) {
+                // ENABLE SCISSOR TEST SO WE CAN CLEAR JUST THE VIEWPORTS
+                glEnable(GL_SCISSOR_TEST);
+
+                // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
+                glViewport(0, 0, frameBufferObjectC->width() / 8, frameBufferObjectC->height());
+                glScissor(0, 0, frameBufferObjectC->width() / 8, frameBufferObjectC->height());
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 // DISABLE SCISSOR FOR THE REST OF THIS CONTEXT
                 glDisable(GL_SCISSOR_TEST);
@@ -528,13 +542,13 @@ void LAUApplyDNNGLWidget::initializeGL()
     frameBufferObjectFormat.setInternalTextureFormat(GL_RGBA32F);
 
     // CREATE NEW FRAME BUFFER OBJECTS
-    frameBufferObjectA = new QOpenGLFramebufferObject((int)object.width(), (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectA = new QOpenGLFramebufferObject(8 * ((int)object.width() / 8), (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectA->release();
-    frameBufferObjectB = new QOpenGLFramebufferObject((int)object.width(), (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectB = new QOpenGLFramebufferObject(8 * ((int)object.width() / 8), (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectB->release();
-    frameBufferObjectC = new QOpenGLFramebufferObject((int)object.width(), (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectC = new QOpenGLFramebufferObject(8 * ((int)object.width() / 8), (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectC->release();
-    frameBufferObjectD = new QOpenGLFramebufferObject((int)object.width(), (int)object.height(), frameBufferObjectFormat);
+    frameBufferObjectD = new QOpenGLFramebufferObject(8 * ((int)object.width() / 8), (int)object.height(), frameBufferObjectFormat);
     frameBufferObjectD->release();
 
     // CREATE SHADERS

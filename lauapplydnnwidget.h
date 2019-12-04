@@ -83,6 +83,9 @@ private:
 
     unsigned int numRows, numCols;
 
+    void dwtHighPassFiltering();
+    void boxCarLowPassFiltering();
+
 signals:
     void emitBuffer(LAUMemoryObject obj);
 };
