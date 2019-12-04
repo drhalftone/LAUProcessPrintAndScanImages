@@ -79,7 +79,7 @@ private:
     QList<QOpenGLTexture *> filterTextures;
     QOpenGLFramebufferObject *frameBufferObjectA, *frameBufferObjectB;
     QOpenGLFramebufferObject *frameBufferObjectC, *frameBufferObjectD;
-    QOpenGLShaderProgram program, progLoD, progHiD, progRecon;
+    QOpenGLShaderProgram program, progLoD, progHiD, progRecon, progBoxCar;
 
     bool initializedFlag;
     int localWidth, localHeight, numInds;

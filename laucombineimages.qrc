@@ -16,5 +16,7 @@
         <file>Shaders/DNN/waveletLODecompFilter.vert</file>
         <file>Shaders/DNN/waveletReconstFilter.frag</file>
         <file>Shaders/DNN/waveletReconstFilter.vert</file>
+        <file>Shaders/DNN/boxCarFilter.frag</file>
+        <file>Shaders/DNN/boxCarFilter.vert</file>
     </qresource>
 </RCC>
