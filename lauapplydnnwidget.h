@@ -14,6 +14,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLPixelTransferOptions>
+#include <QOpenGLFramebufferObjectFormat>
 
 #include "laumemoryobject.h"
 
@@ -73,13 +74,15 @@ private:
     LAUMemoryObject object;
 
     QOpenGLPixelTransferOptions options;
+    QOpenGLFramebufferObjectFormat frameBufferObjectFormat;
     QOpenGLBuffer quadVertexBuffer, quadIndexBuffer;
     QOpenGLVertexArrayObject vertexArrayObject;
     QOpenGLTexture *objectTexture;
     QList<QOpenGLTexture *> filterTextures;
-    QOpenGLFramebufferObject *frameBufferObjectA, *frameBufferObjectB;
-    QOpenGLFramebufferObject *frameBufferObjectC, *frameBufferObjectD;
-    QOpenGLShaderProgram program, progLoD, progHiD, progRecon, progBoxCar;
+    QOpenGLFramebufferObject *frameBufferObjectA, *frameBufferObjectB, *frameBufferObjectC;
+    QOpenGLFramebufferObject *frameBufferObjectD, *frameBufferObjectE, *frameBufferObjectF;
+    QOpenGLShaderProgram program, progLoD, progHiD, progRecon, progHorBoxCar, progVrtBoxCar;
+    QOpenGLShaderProgram progSubtractMeanFromSwath, progConv1, progMaxPool;
 
     bool initializedFlag;
     int localWidth, localHeight, numInds;
@@ -88,6 +91,15 @@ private:
 
     void dwtHighPassFiltering();
     void boxCarLowPassFiltering();
+
+    void imageInputLayer();
+    void convolutionLayer1();
+    void convolutionLayer2();
+    void convolutionLayer3();
+    void convolutionLayer4();
+    void maxPoolLayer();
+    void fullyConnectorLayer1();
+    void fullyConnectorLayer2();
 
 signals:
     void emitBuffer(LAUMemoryObject obj);

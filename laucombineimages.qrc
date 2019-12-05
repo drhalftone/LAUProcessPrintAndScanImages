@@ -16,7 +16,15 @@
         <file>Shaders/DNN/waveletLODecompFilter.vert</file>
         <file>Shaders/DNN/waveletReconstFilter.frag</file>
         <file>Shaders/DNN/waveletReconstFilter.vert</file>
-        <file>Shaders/DNN/boxCarFilter.frag</file>
-        <file>Shaders/DNN/boxCarFilter.vert</file>
+        <file>Shaders/DNN/horBoxCarFilter.frag</file>
+        <file>Shaders/DNN/vrtBoxCarFilter.frag</file>
+        <file>Shaders/DNN/horBoxCarFilter.vert</file>
+        <file>Shaders/DNN/vrtBoxCarFilter.vert</file>
+        <file>Shaders/DNN/subMeanFromSwath.frag</file>
+        <file>Shaders/DNN/subMeanFromSwath.vert</file>
+        <file>Shaders/DNN/convLayer1Filter.vert</file>
+        <file>Shaders/DNN/convLayer1Filter.frag</file>
+        <file>Shaders/DNN/maxPoolFilter.vert</file>
+        <file>Shaders/DNN/maxPoolFilter.frag</file>
     </qresource>
 </RCC>
