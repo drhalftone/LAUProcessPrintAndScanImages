@@ -127,32 +127,32 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
             }
 
             // PREPROCESS THE IMAGE BY LOWPASS FILTERING IN THE X AND Y DIRECTION
-            //dwtHighPassFiltering();
-            //boxCarLowPassFiltering();
-
-            // NOW IMPLEMENT THE NETWORK LAYERS
-            // imageInputLayer();
+            dwtHighPassFiltering();
+            boxCarLowPassFiltering();
 
             // NOW START PROCESSING IMAGES IN BLOCKS OF 128 ROWS
-            //for (unsigned int row = 0; row < frameBufferObjectA->height(); row += 128) {
-            // COPY OVER THE NEXT 128 ROWS OF THE INPUT IMAGE TO FRAME BUFFER OBJECT D
-            //QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectD, QRect(0, 0, frameBufferObjectD->width(), 128), frameBufferObjectA, QRect(0, row, frameBufferObjectD->width(), 128));
+            for (unsigned int row = 0; row < frameBufferObjectA->height(); row += 128) {
+                // COPY OVER THE NEXT 128 ROWS OF THE INPUT IMAGE TO FRAME BUFFER OBJECT D
+                QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectD, QRect(0, 0, frameBufferObjectD->width(), 128), frameBufferObjectA, QRect(0, row, frameBufferObjectD->width(), 128));
 
-            // CALL THE FIRST CONVOLUTIONAL LAYER
-            // convolutionLayer1();
-            // maxPoolLayer();
+                // NOW IMPLEMENT THE NETWORK LAYERS
+                imageInputLayer();
 
-            //QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectA, QRect(0, row, frameBufferObjectD->width(), 128), frameBufferObjectD, QRect(0, 0, frameBufferObjectD->width(), 128));
-            //}
+                // CALL THE FIRST CONVOLUTIONAL LAYER
+                convolutionLayer1();
+                maxPoolLayer();
+                convolutionLayer2();
+                maxPoolLayer();
+                convolutionLayer3();
+                maxPoolLayer();
+                convolutionLayer4();
+                maxPoolLayer();
 
-            //            convolutionLayer2();
-            //            maxPoolLayer();
-            //            convolutionLayer3();
-            //            maxPoolLayer();
-            //            convolutionLayer4();
-            //            maxPoolLayer();
-            //            fullyConnectorLayer1();
-            //            fullyConnectorLayer2();
+                //            fullyConnectorLayer1();
+                //            fullyConnectorLayer2();
+
+                QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectA, QRect(0, row, frameBufferObjectD->width(), 128), frameBufferObjectD, QRect(0, 0, frameBufferObjectD->width(), 128));
+            }
         }
     }
 }
@@ -353,9 +353,9 @@ void LAUApplyDNNGLWidget::imageInputLayer()
     // SUBTRACTING OUT THE MEAN VALUE FROM EACH SWATCH SO THAT MEAN VALUE IS 0
 
     // FIRST, WE NEED TO CALCULATE THE MEAN VALUE INSIDE SWATHS OF 128 PIXELS
-    if (frameBufferObjectB->bind()) {
+    if (frameBufferObjectE->bind()) {
         // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-        glViewport(0, 0, frameBufferObjectB->width(), frameBufferObjectB->height());
+        glViewport(0, 0, frameBufferObjectE->width(), frameBufferObjectE->height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (progHorBoxCar.bind()) {
@@ -364,7 +364,7 @@ void LAUApplyDNNGLWidget::imageInputLayer()
                 if (quadIndexBuffer.bind()) {
                     // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
                     progHorBoxCar.setUniformValue("qt_texture", 0);
                     progHorBoxCar.setUniformValue("qt_width", 128);
 
@@ -381,13 +381,13 @@ void LAUApplyDNNGLWidget::imageInputLayer()
             }
             progHorBoxCar.release();
         }
-        frameBufferObjectB->release();
+        frameBufferObjectE->release();
     }
 
     // NOW WE NEED TO SUBTRACT THE MEAN VALUE FROM EACH RUN OF 128 CONSECUTIVE PIXELS
-    if (frameBufferObjectC->bind()) {
+    if (frameBufferObjectF->bind()) {
         // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
-        glViewport(0, 0, frameBufferObjectC->width(), frameBufferObjectC->height());
+        glViewport(0, 0, frameBufferObjectF->width(), frameBufferObjectF->height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (progSubtractMeanFromSwath.bind()) {
@@ -396,12 +396,12 @@ void LAUApplyDNNGLWidget::imageInputLayer()
                 if (quadIndexBuffer.bind()) {
                     // BIND THE INPUT TEXTURE FROM THE FRAME BUFFER OBJECT
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
                     progSubtractMeanFromSwath.setUniformValue("qt_textureA", 0);
 
                     // BIND THE MEAN TEXTURE FROM THE FRAME BUFFER OBJECT
                     glActiveTexture(GL_TEXTURE1);
-                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectB->texture());
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectE->texture());
                     progSubtractMeanFromSwath.setUniformValue("qt_textureB", 1);
 
                     progSubtractMeanFromSwath.setUniformValue("qt_width", 128);
@@ -419,10 +419,10 @@ void LAUApplyDNNGLWidget::imageInputLayer()
             }
             progSubtractMeanFromSwath.release();
         }
-        frameBufferObjectC->release();
+        frameBufferObjectF->release();
 
         // COPY OVER FRAMEBUFFER A TO FRAMEBUFFER B
-        QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectA, frameBufferObjectC);
+        QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectD, frameBufferObjectF);
     }
 }
 
@@ -431,9 +431,13 @@ void LAUApplyDNNGLWidget::imageInputLayer()
 /****************************************************************************/
 void LAUApplyDNNGLWidget::convolutionLayer1()
 {
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 8 ROWS
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 8 ROWS
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 8 ROWS
+
     // BIND FRAMEBUFFER A TO HOLD THE FIRST LEVEL WAVELET DECOMPOSITION
     if (frameBufferObjectE->bind()) {
-        // NOW FOCUS ON THE LOW FREQUENCY COEFFICIENTS
+        // CLEAR THE ENTIRE OUTPUT BUFFER
         glViewport(0, 0, frameBufferObjectE->width(), frameBufferObjectE->height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -471,7 +475,46 @@ void LAUApplyDNNGLWidget::convolutionLayer1()
 /****************************************************************************/
 void LAUApplyDNNGLWidget::convolutionLayer2()
 {
-    ;
+    // THIS CONVOLUTIONAL LAYERS TAKES 8 ROWS IN AND OUTPUTS 1 ROW
+    // THIS CONVOLUTIONAL LAYERS TAKES 8 ROWS IN AND OUTPUTS 1 ROW
+    // THIS CONVOLUTIONAL LAYERS TAKES 8 ROWS IN AND OUTPUTS 1 ROW
+
+    // BIND FRAMEBUFFER A TO HOLD THE FIRST LEVEL WAVELET DECOMPOSITION
+    if (frameBufferObjectE->bind()) {
+        // CLEAR THE ENTIRE OUTPUT BUFFER
+        glViewport(0, 0, frameBufferObjectE->width(), frameBufferObjectE->height());
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // NOW FOCUS ON JUST THE FIRST 1/8th ROWS
+        glViewport(0, 0, frameBufferObjectE->width(), frameBufferObjectE->height() / 8);
+
+        if (progConv2.bind()) {
+            // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
+            if (quadVertexBuffer.bind()) {
+                if (quadIndexBuffer.bind()) {
+                    // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
+                    progConv2.setUniformValue("qt_texture", 0);
+
+                    // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
+                    progConv2.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
+                    progConv2.enableAttributeArray("qt_vertex");
+
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+                    // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
+                    quadIndexBuffer.release();
+                }
+                quadVertexBuffer.release();
+            }
+            progConv2.release();
+        }
+        frameBufferObjectE->release();
+
+        // COPY OVER FRAMEBUFFER A TO FRAMEBUFFER B
+        QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectD, frameBufferObjectE);
+    }
 }
 
 /****************************************************************************/
@@ -479,7 +522,43 @@ void LAUApplyDNNGLWidget::convolutionLayer2()
 /****************************************************************************/
 void LAUApplyDNNGLWidget::convolutionLayer3()
 {
-    ;
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 1 ROW
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 1 ROW
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 1 ROW
+
+    // BIND FRAMEBUFFER A TO HOLD THE FIRST LEVEL WAVELET DECOMPOSITION
+    if (frameBufferObjectE->bind()) {
+        // CLEAR THE FIRST 1/8TH OF THE OUTPUT BUFFER
+        glViewport(0, 0, frameBufferObjectE->width(), frameBufferObjectE->height() / 8);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if (progConv3.bind()) {
+            // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
+            if (quadVertexBuffer.bind()) {
+                if (quadIndexBuffer.bind()) {
+                    // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
+                    progConv3.setUniformValue("qt_texture", 0);
+
+                    // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
+                    progConv3.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
+                    progConv3.enableAttributeArray("qt_vertex");
+
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+                    // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
+                    quadIndexBuffer.release();
+                }
+                quadVertexBuffer.release();
+            }
+            progConv3.release();
+        }
+        frameBufferObjectE->release();
+
+        // COPY OVER FRAMEBUFFER A TO FRAMEBUFFER B
+        QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectD, frameBufferObjectE);
+    }
 }
 
 /****************************************************************************/
@@ -487,7 +566,43 @@ void LAUApplyDNNGLWidget::convolutionLayer3()
 /****************************************************************************/
 void LAUApplyDNNGLWidget::convolutionLayer4()
 {
-    ;
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 1 ROW
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 1 ROW
+    // THIS CONVOLUTIONAL LAYERS TAKES 1 ROW IN AND OUTPUTS 1 ROW
+
+    // BIND FRAMEBUFFER A TO HOLD THE FIRST LEVEL WAVELET DECOMPOSITION
+    if (frameBufferObjectE->bind()) {
+        // CLEAR THE FIRST 1/8TH OF THE OUTPUT BUFFER
+        glViewport(0, 0, frameBufferObjectE->width(), frameBufferObjectE->height() / 8);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if (progConv4.bind()) {
+            // BIND VBOS FOR DRAWING TRIANGLES ON SCREEN
+            if (quadVertexBuffer.bind()) {
+                if (quadIndexBuffer.bind()) {
+                    // BIND THE TEXTURE FROM THE FRAME BUFFER OBJECT
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
+                    progConv4.setUniformValue("qt_texture", 0);
+
+                    // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
+                    progConv4.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
+                    progConv4.enableAttributeArray("qt_vertex");
+
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+                    // RELEASE THE FRAME BUFFER OBJECT AND ITS ASSOCIATED GLSL PROGRAMS
+                    quadIndexBuffer.release();
+                }
+                quadVertexBuffer.release();
+            }
+            progConv4.release();
+        }
+        frameBufferObjectE->release();
+
+        // COPY OVER FRAMEBUFFER A TO FRAMEBUFFER B
+        QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectD, frameBufferObjectE);
+    }
 }
 
 /****************************************************************************/
@@ -694,6 +809,18 @@ void LAUApplyDNNGLWidget::initializeGL()
     progConv1.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/Shaders/DNN/convLayer1Filter.vert");
     progConv1.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/Shaders/DNN/convLayer1Filter.frag");
     progConv1.link();
+
+    progConv2.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/Shaders/DNN/convLayer2Filter.vert");
+    progConv2.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/Shaders/DNN/convLayer2Filter.frag");
+    progConv2.link();
+
+    progConv3.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/Shaders/DNN/convLayer3Filter.vert");
+    progConv3.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/Shaders/DNN/convLayer3Filter.frag");
+    progConv3.link();
+
+    progConv4.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/Shaders/DNN/convLayer4Filter.vert");
+    progConv4.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/Shaders/DNN/convLayer4Filter.frag");
+    progConv4.link();
 
     progMaxPool.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/Shaders/DNN/maxPoolFilter.vert");
     progMaxPool.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/Shaders/Shaders/DNN/maxPoolFilter.frag");

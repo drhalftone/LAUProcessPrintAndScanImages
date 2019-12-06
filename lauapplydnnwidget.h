@@ -82,7 +82,8 @@ private:
     QOpenGLFramebufferObject *frameBufferObjectA, *frameBufferObjectB, *frameBufferObjectC;
     QOpenGLFramebufferObject *frameBufferObjectD, *frameBufferObjectE, *frameBufferObjectF;
     QOpenGLShaderProgram program, progLoD, progHiD, progRecon, progHorBoxCar, progVrtBoxCar;
-    QOpenGLShaderProgram progSubtractMeanFromSwath, progConv1, progMaxPool;
+    QOpenGLShaderProgram progConv1, progConv2, progConv3, progConv4;
+    QOpenGLShaderProgram progSubtractMeanFromSwath, progMaxPool;
 
     bool initializedFlag;
     int localWidth, localHeight, numInds;
