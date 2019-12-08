@@ -18,8 +18,9 @@
 
 #include "laumemoryobject.h"
 
-#define DWTLEVELS    5     // NUMBER OF TIMES WE DECOMPOSE THE SIGNAL USING THE DWT
-#define DWTSTEP     32     // 2^DWTLEVELS
+#define DNNSWATHLENGTH   169     // SIZE OF STRIPES TO BE FED INTO DNN
+#define DWTLEVELS          5     // NUMBER OF TIMES WE DECOMPOSE THE SIGNAL USING THE DWT
+#define DWTSTEP           32     // 2^DWTLEVELS
 
 /****************************************************************************/
 /****************************************************************************/
@@ -82,7 +83,7 @@ private:
     QOpenGLFramebufferObject *frameBufferObjectA, *frameBufferObjectB, *frameBufferObjectC;
     QOpenGLFramebufferObject *frameBufferObjectD, *frameBufferObjectE, *frameBufferObjectF;
     QOpenGLShaderProgram program, progLoD, progHiD, progRecon, progHorBoxCar, progVrtBoxCar;
-    QOpenGLShaderProgram progConv1, progConv2, progConv3, progConv4;
+    QOpenGLShaderProgram progConv1, progConv2, progConv3, progFullCon1, progFullCon2;
     QOpenGLShaderProgram progSubtractMeanFromSwath, progMaxPool;
 
     bool initializedFlag;
@@ -97,7 +98,6 @@ private:
     void convolutionLayer1();
     void convolutionLayer2();
     void convolutionLayer3();
-    void convolutionLayer4();
     void maxPoolLayer();
     void fullyConnectorLayer1();
     void fullyConnectorLayer2();

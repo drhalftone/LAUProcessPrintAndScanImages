@@ -27,10 +27,12 @@
         <file>Shaders/DNN/maxPoolFilter.vert</file>
         <file>Shaders/DNN/maxPoolFilter.frag</file>
         <file>Shaders/DNN/convLayer2Filter.frag</file>
-        <file>Shaders/DNN/convLayer4Filter.vert</file>
-        <file>Shaders/DNN/convLayer4Filter.frag</file>
         <file>Shaders/DNN/convLayer3Filter.vert</file>
         <file>Shaders/DNN/convLayer3Filter.frag</file>
         <file>Shaders/DNN/convLayer2Filter.vert</file>
+        <file>Shaders/DNN/progFullCon1.frag</file>
+        <file>Shaders/DNN/progFullCon1.vert</file>
+        <file>Shaders/DNN/progFullCon2.frag</file>
+        <file>Shaders/DNN/progFullCon2.vert</file>
     </qresource>
 </RCC>
