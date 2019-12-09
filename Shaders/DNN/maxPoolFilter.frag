@@ -10,8 +10,8 @@ void main()
     ivec2 position = ivec2(gl_FragCoord.xy);
 
     // INITIALIZE THE OUTPUT PIXEL TO THE FIRST PIXEL IN THE SWATH    
-    vec4 qt_fragColorA = texelFetch(qt_texture, ivec2(2 * gl_FragCoord.x + 0, gl_FragCoord.y), 0);
-    vec4 qt_fragColorB = texelFetch(qt_texture, ivec2(2 * gl_FragCoord.x + 1, gl_FragCoord.y), 0);
+    vec4 qt_fragColorA = texelFetch(qt_texture, ivec2(2 * position.x - 1, position.y), 0);
+    vec4 qt_fragColorB = texelFetch(qt_texture, ivec2(2 * position.x - 0, position.y), 0);
 
     // NOW GET THE MAXIMUM PIXEL VALUE OVER THE TWO CONSECUTIVE PIXELS
     qt_fragColor = max(qt_fragColorA, qt_fragColorB);

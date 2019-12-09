@@ -82,9 +82,11 @@ private:
     QList<QOpenGLTexture *> filterTextures;
     QOpenGLFramebufferObject *frameBufferObjectA, *frameBufferObjectB, *frameBufferObjectC;
     QOpenGLFramebufferObject *frameBufferObjectD, *frameBufferObjectE, *frameBufferObjectF;
+    QOpenGLFramebufferObject *frameBufferObjectG;
     QOpenGLShaderProgram program, progLoD, progHiD, progRecon, progHorBoxCar, progVrtBoxCar;
     QOpenGLShaderProgram progConv1, progConv2, progConv3, progFullCon1, progFullCon2;
-    QOpenGLShaderProgram progSubtractMeanFromSwath, progMaxPool;
+    QOpenGLShaderProgram progSubtractMeanFromSwath, progMaxPool, progFloodFill;
+    QOpenGLShaderProgram progLabelImage, progDisplayRGB;
 
     bool initializedFlag;
     int localWidth, localHeight, numInds;
@@ -98,9 +100,12 @@ private:
     void convolutionLayer1();
     void convolutionLayer2();
     void convolutionLayer3();
-    void maxPoolLayer();
-    void fullyConnectorLayer1();
-    void fullyConnectorLayer2();
+    void maxPoolLayer(int wdt, int hgt);
+    void fullyConnectedLayer1();
+    void fullyConnectedLayer2();
+    void floodFillScore();
+
+    void labelOutputImage();
 
 signals:
     void emitBuffer(LAUMemoryObject obj);

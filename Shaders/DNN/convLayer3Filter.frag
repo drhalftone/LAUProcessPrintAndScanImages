@@ -9,7 +9,7 @@
 uniform sampler2D qt_texture;  // THIS TEXTURE HOLDS THE XYZ+TEXTURE COORDINATES
 
 // DEFINE THE CONVOLUTIONAL FILTER WEIGHTS
-const float weights[LENFILTERS] = float[LENFILTERS](-0.241045, -0.237482, -0.227275, -0.228335, -0.228409, -0.219225, -0.221898, -0.224422, -0.220480, -0.225995, -0.226502, -0.224388, -0.239700, -0.237258, -0.222406, -0.231869);
+const float weights[LENFILTERS] = float[LENFILTERS](0.400792211294,   0.025730950758,   0.107204042375,   0.556696236134,  -0.225401923060,   0.445497810841,   0.505782485008,   0.326852291822,  -0.201292261481,  -0.074891448021,  -0.005649564788,   0.328295350075,  -0.152026161551,   0.381219267845,  -0.136470183730,   0.324716687202);
 
 layout(location = 0, index = 0) out vec4 qt_fragColor;
 
@@ -21,6 +21,9 @@ void main()
     // INITIALIZE THE OUTPUT PIXEL TO THE FIRST PIXEL IN THE SWATH    
     qt_fragColor = vec4(0.0, 0.0, 0.0, 0.0);
     for (int c = 0; c < LENFILTERS; c++){
-        qt_fragColor += weights[c] * texelFetch(qt_texture, ivec2(gl_FragCoord.x - c, gl_FragCoord.y), 0);
+        qt_fragColor += weights[c] * texelFetch(qt_texture, ivec2(position.x + c, position.y), 0);
     }
+
+    // ADD IN THE FILTER BIAS
+    qt_fragColor += 0.061739400029;
 }
