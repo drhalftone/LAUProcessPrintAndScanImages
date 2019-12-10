@@ -162,7 +162,7 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
                 // FLOOD FILL THE SCORE ACROSS THE PAGE
                 floodFillScore();
 
-                QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectA, QRect(0, row, frameBufferObjectD->width(), 128), frameBufferObjectD, QRect(0, 0, frameBufferObjectD->width(), 128));
+                QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectC, QRect(0, row, frameBufferObjectD->width(), 128), frameBufferObjectD, QRect(0, 0, frameBufferObjectD->width(), 128));
             }
 
             // TRANSCRIBE SCORES BACK TO ORIGINAL FOR DISPLAY
@@ -420,6 +420,10 @@ void LAUApplyDNNGLWidget::imageInputLayer()
                     glBindTexture(GL_TEXTURE_2D, frameBufferObjectE->texture());
                     progSubtractMeanFromSwath.setUniformValue("qt_textureB", 1);
 
+                    // SET THE ZERO PADDING ARGUMENTS
+                    progSubtractMeanFromSwath.setUniformValue("qt_padLo", DNNSWATHLENGTH);
+                    progSubtractMeanFromSwath.setUniformValue("qt_padHi", DNNBUFFERLENGTH);
+
                     // TELL THE SHADER WHO WIDE TO MAKE THE SWATHS
                     progSubtractMeanFromSwath.setUniformValue("qt_width", DNNSWATHLENGTH);
 
@@ -467,6 +471,10 @@ void LAUApplyDNNGLWidget::convolutionLayer1()
                     glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
                     progConv1.setUniformValue("qt_texture", 0);
 
+                    // SET ZERO PADDING PARAMETERS
+                    progConv1.setUniformValue("qt_padLo", DNNSWATHLENGTH - 15);
+                    progConv1.setUniformValue("qt_padHi", DNNBUFFERLENGTH);
+
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                     progConv1.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
                     progConv1.enableAttributeArray("qt_vertex");
@@ -511,6 +519,10 @@ void LAUApplyDNNGLWidget::convolutionLayer2()
                     glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
                     progConv2.setUniformValue("qt_texture", 0);
 
+                    // SET ZERO PADDING PARAMETERS
+                    progConv2.setUniformValue("qt_padLo", (DNNSWATHLENGTH - 15) / 2 - 15);
+                    progConv2.setUniformValue("qt_padHi", DNNBUFFERLENGTH / 2);
+
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                     progConv2.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
                     progConv2.enableAttributeArray("qt_vertex");
@@ -554,6 +566,10 @@ void LAUApplyDNNGLWidget::convolutionLayer3()
                     glActiveTexture(GL_TEXTURE0);
                     glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
                     progConv3.setUniformValue("qt_texture", 0);
+
+                    // SET ZERO PADDING PARAMETERS
+                    progConv3.setUniformValue("qt_padLo", ((DNNSWATHLENGTH - 15) / 2 - 15) / 2 - 15);
+                    progConv3.setUniformValue("qt_padHi", DNNBUFFERLENGTH / 4);
 
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                     progConv3.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
@@ -642,6 +658,10 @@ void LAUApplyDNNGLWidget::fullyConnectedLayer1()
                     glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
                     progFullCon1.setUniformValue("qt_texture", 0);
 
+                    // SET ZERO PADDING PARAMETERS
+                    progFullCon1.setUniformValue("qt_padLo", 8);
+                    progFullCon1.setUniformValue("qt_padHi", DNNBUFFERLENGTH / 8);
+
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                     progFullCon1.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
                     progFullCon1.enableAttributeArray("qt_vertex");
@@ -686,6 +706,10 @@ void LAUApplyDNNGLWidget::fullyConnectedLayer2()
                     glBindTexture(GL_TEXTURE_2D, frameBufferObjectD->texture());
                     progFullCon2.setUniformValue("qt_texture", 0);
 
+                    // SET ZERO PADDING PARAMETERS
+                    progFullCon2.setUniformValue("qt_padLo", 8);
+                    progFullCon2.setUniformValue("qt_padHi", 8);
+
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                     progFullCon2.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
                     progFullCon2.enableAttributeArray("qt_vertex");
@@ -727,7 +751,7 @@ void LAUApplyDNNGLWidget::floodFillScore()
                     progFloodFill.setUniformValue("qt_texture", 0);
 
                     // TELL THE SHADER WHO WIDE TO MAKE THE SWATHS
-                    progFloodFill.setUniformValue("qt_width", DNNSWATHLENGTH);
+                    progFloodFill.setUniformValue("qt_width", DNNBUFFERLENGTH);
 
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                     progFullCon2.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
@@ -771,11 +795,11 @@ void LAUApplyDNNGLWidget::labelOutputImage()
 
                     // BIND THE SCORE IMAGE
                     glActiveTexture(GL_TEXTURE1);
-                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+                    glBindTexture(GL_TEXTURE_2D, frameBufferObjectC->texture());
                     progLabelImage.setUniformValue("qt_textureB", 1);
 
                     // TELL THE SHADER WHO WIDE TO MAKE THE SWATHS
-                    progLabelImage.setUniformValue("qt_threshold", 8.0f);
+                    progLabelImage.setUniformValue("qt_threshold", 10.0f);
 
                     // TELL OPENGL PROGRAMMABLE PIPELINE HOW TO LOCATE VERTEX POSITION DATA
                     progLabelImage.setAttributeBuffer("qt_vertex", GL_FLOAT, 0, 4, 4 * sizeof(float));
@@ -1057,13 +1081,13 @@ void LAUApplyDNNGLWidget::paintGL()
 LAUMemoryObject LAUApplyDNNGLWidget::result()
 {
     // MAKE SURE WE HAVE AN FBO TO READ FROM
-    if (frameBufferObjectA) {
+    if (frameBufferObjectC) {
         // MAKE THIS THE CURRENT OPENGL CONTEXT
         makeCurrent();
 
         // CREATE A MEMORY OBJECT AND DOWNLOAD FRAME BUFFER OBJECT TO IT
-        LAUMemoryObject obj(frameBufferObjectA->width(), frameBufferObjectA->height(), 4, sizeof(float));
-        glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+        LAUMemoryObject obj(frameBufferObjectC->width(), frameBufferObjectC->height(), 4, sizeof(float));
+        glBindTexture(GL_TEXTURE_2D, frameBufferObjectC->texture());
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
 
         // RETURN OUR CPU MEMORY TO THE USER
