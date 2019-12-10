@@ -7,6 +7,9 @@
 
 uniform sampler2D qt_texture;  // THIS TEXTURE HOLDS THE XYZ+TEXTURE COORDINATES
 
+uniform       int qt_padLo;    // THIS SETS THE NUMBER OF NONZERO OUTPUTS
+uniform       int qt_padHi;    // THIS SETS THE NUMBER OF NONZERO + ZERO OUTPUTS
+
 // DEFINE THE CONVOLUTIONAL FILTER WEIGHTS
 const float weights[64] = float[64]( -0.167177736759,   0.183771848679,   0.134663581848,   0.350525945425,   0.401534438133,  -0.313063502312,   0.090772248805,  -0.568509995937,
                                      -0.745317459106,   0.132868751884,  -0.141296327114,  -0.177408307791,   0.399499505758,   0.009974382818,  -0.017520075664,   0.231706768274,
@@ -34,7 +37,7 @@ void main()
 
     // ITERATE OVER CURRENT 8 INPUT PIXELS
     for (int c = 0; c < NUMFILTERS; c++){
-        qt_fragColor += weights[NUMFILTERS * index + c] * texelFetch(qt_texture, ivec2(position.x / NUMFILTERS + c, position.y), 0);
+        qt_fragColor += weights[NUMFILTERS * index + c] * texelFetch(qt_texture, ivec2(qt_padHi * (position.x / NUMFILTERS) + c, position.y), 0);
     }
 
     // ADD IN THE FILTER BIAS
