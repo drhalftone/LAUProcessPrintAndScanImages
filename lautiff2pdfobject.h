@@ -3,12 +3,14 @@
 
 #include <QObject>
 
+#ifndef Q_OS_LINUX
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
 #include <errno.h>
+#endif
 
 namespace libtiff
 {

@@ -20,8 +20,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-CONFIG  += c++11
-
 SOURCES += main.cpp \
            lauapplydnnwidget.cpp \
            laudefaultdirectorieswidget.cpp \
@@ -53,7 +51,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 unix:macx {
-    CONFIG         += sdk_no_version_check
+    CONFIG         += c++11 sdk_no_version_check
     QMAKE_CXXFLAGS += -msse2 -msse3 -mssse3 -msse4.1
     INCLUDEPATH    += /usr/local/include /usr/local/include/eigen3
     DEPENDPATH     += /usr/local/include /usr/local/include/eigen3
@@ -62,8 +60,6 @@ unix:macx {
 
 unix:!macx {
     QMAKE_CXXFLAGS += -msse2 -msse3 -mssse3 -msse4.1
-    INCLUDEPATH    += /usr/include /usr/include/eigen3
-    DEPENDPATH     += /usr/include /usr/include/eigen3
     LIBS           += -ltiff
     CONFIG         += c++11
 }
@@ -87,9 +83,9 @@ opencv {
     }
 
     unix:!macx {
-        INCLUDEPATH   += /usr/local/opt/opencv/include
-        DEPENDPATH    += /usr/local/opt/opencv/include
-        LIBS          += -L/usr/local/lib -lopencv_core -lopencv_objdetect -lopencv_imgproc -lopencv_calib3d -lopencv_highgui -lopencv_ml
+        INCLUDEPATH   += /usr/local/include/opencv4
+        DEPENDPATH    += /usr/local/include/opencv4
+        LIBS          += -L/usr/local/lib -lopencv_core -lopencv_features2d -lopencv_xfeatures2d -lopencv_imgproc -lopencv_calib3d -lopencv_highgui
     }
 
     win32 {
