@@ -647,6 +647,7 @@ void LAUFindGridDialog::accept()
         } else {
             startingIndex *= (widget->rows() * widget->cols());
         }
+
         if (okay) {
             settings.setValue("LAUFindGridDialog::startingIndex", startingIndex);
             for (int index = 0; index < static_cast<int>(widget->rows() * widget->cols()); index++) {

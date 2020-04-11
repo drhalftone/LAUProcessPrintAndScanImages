@@ -4,6 +4,7 @@
 #include <QProgressDialog>
 
 #include <iostream>
+#ifdef USEOPENCV
 #include "opencv2/core.hpp"
 #include "opencv2/calib3d.hpp"
 #include "opencv2/highgui.hpp"
@@ -13,6 +14,7 @@
 
 using namespace cv;
 using namespace cv::xfeatures2d;
+#endif
 using std::cout;
 using std::endl;
 
@@ -83,6 +85,9 @@ LAUImageMatchingWidget::LAUImageMatchingWidget(LAUMemoryObject objA, LAUMemoryOb
 /****************************************************************************/
 QMatrix3x3 LAUImageMatchingWidget::homography(LAUMemoryObject objA, LAUMemoryObject objB)
 {
+    QMatrix3x3 T;
+
+#ifdef USEOPENCV
     Mat img_object = objA.toMat();
     Mat img_scene = objB.toMat();
 
@@ -125,7 +130,6 @@ QMatrix3x3 LAUImageMatchingWidget::homography(LAUMemoryObject objA, LAUMemoryObj
         H = findHomography(obj, scene, LMEDS);
     }
 
-    QMatrix3x3 T;
     if (H.rows == 3 && H.cols == 3 && H.depth() == CV_64F) {
         T(0, 0) = H.at<double>(0, 0);
         T(0, 1) = H.at<double>(0, 1);
@@ -147,7 +151,7 @@ QMatrix3x3 LAUImageMatchingWidget::homography(LAUMemoryObject objA, LAUMemoryObj
         T(2, 1) = 0.0f;
         T(2, 2) = 0.0f;
     }
-
+#endif
     return (T);
 }
 
@@ -159,6 +163,7 @@ LAUMemoryObject LAUImageMatchingWidget::match(LAUMemoryObject objA, LAUMemoryObj
     // FORCE A DEEP COPY OF THE TARGET IMAGE
     objB.deepCopy();
 
+#ifdef USEOPENCV
     Mat img_object = objA.toMat();
     Mat img_scene = objB.toMat();
 
@@ -176,7 +181,7 @@ LAUMemoryObject LAUImageMatchingWidget::match(LAUMemoryObject objA, LAUMemoryObj
     H.at<float>(2, 2) = T(2, 2);
 
     warpPerspective(img_object, img_scene, H, img_scene.size());
-
+#endif
     return (objB);
 }
 
@@ -185,6 +190,7 @@ LAUMemoryObject LAUImageMatchingWidget::match(LAUMemoryObject objA, LAUMemoryObj
 /****************************************************************************/
 LAUMemoryObject LAUImageMatchingWidget::matchByReduction(LAUMemoryObject objA, LAUMemoryObject objB)
 {
+#ifdef USEOPENCV
     Mat imgA, imgB;
 
     imgA = objB.toMat(true);
@@ -223,6 +229,9 @@ LAUMemoryObject LAUImageMatchingWidget::matchByReduction(LAUMemoryObject objA, L
         memcpy(object.constScanLine(row), imgB.ptr((int)row), qMin((int)object.step(), (int)imgB.step));
     }
     return (object);
+#else
+    return (LAUMemoryObject());
+#endif
 }
 
 /****************************************************************************/

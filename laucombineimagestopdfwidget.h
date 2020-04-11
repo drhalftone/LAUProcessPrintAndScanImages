@@ -121,7 +121,7 @@ class LAUCombineImagesToPDFDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit LAUCombineImagesToPDFDialog(QWidget *parent = NULL) : QDialog(parent)
+    explicit LAUCombineImagesToPDFDialog(QWidget *parent = nullptr) : QDialog(parent)
     {
         this->setLayout(new QVBoxLayout());
         this->layout()->setContentsMargins(6, 6, 6, 6);

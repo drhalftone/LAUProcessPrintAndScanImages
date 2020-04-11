@@ -61,7 +61,9 @@
 #include <QDialogButtonBox>
 #endif
 
+#ifdef USEOPENCV
 #include "opencv2/core.hpp"
+#endif
 
 namespace libtiff
 {
@@ -137,7 +139,10 @@ public:
     bool save(libtiff::TIFF *otTiff, unsigned short index = 0);
     bool load(libtiff::TIFF *inTiff, unsigned short index = 0);
 
+#ifdef USEOPENCV
     cv::Mat toMat(bool deep = false);
+#endif
+
     QImage preview();
     LAUMemoryObject crop(unsigned int wdth, unsigned int hght) const
     {

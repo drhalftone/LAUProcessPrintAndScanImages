@@ -146,6 +146,9 @@ protected:
         } else if (mode == ModeSingleProcess) {
             LAUFindGridDialog dialog(widget->object(), this);
             dialog.setFilename(widget->filename());
+            dialog.setPrintedWidth(widget->printedWidth());
+            dialog.setPrintedHeight(widget->printedHeight());
+            dialog.setPrintedResolution(widget->printedResolution());
             dialog.setCols(widget->cols());
             dialog.setRows(widget->rows());
             if (dialog.exec() == QDialog::Accepted) {

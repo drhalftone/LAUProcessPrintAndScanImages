@@ -164,6 +164,27 @@ public:
         this->layout()->addWidget(buttonBox);
     }
 
+    void setPrintedResolution(double val)
+    {
+        if (widget) {
+            widget->setPrintedResolution(val);
+        }
+    }
+
+    void setPrintedWidth(double val)
+    {
+        if (widget) {
+            widget->setPrintedWidth(val);
+        }
+    }
+
+    void setPrintedHeight(double val)
+    {
+        if (widget) {
+            widget->setPrintedHeight(val);
+        }
+    }
+
     void setRows(int val)
     {
         if (widget) {

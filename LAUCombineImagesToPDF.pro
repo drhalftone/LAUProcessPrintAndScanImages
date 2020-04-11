@@ -76,6 +76,8 @@ win32 {
 RESOURCES += laucombineimages.qrc
 
 opencv {
+    DEFINES += USEOPENCV
+
     unix:macx {
         INCLUDEPATH   += /usr/local/include/opencv4
         DEPENDPATH    += /usr/local/include/opencv4

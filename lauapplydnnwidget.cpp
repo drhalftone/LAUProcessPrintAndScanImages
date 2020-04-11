@@ -129,6 +129,12 @@ void LAUApplyDNNGLWidget::updateBuffer(LAUMemoryObject obj)
             // KEEP A COPY OF THE INPUT IMAGE FOR SHOWING THE FINAL RESULT LATER
             QOpenGLFramebufferObject::blitFramebuffer(frameBufferObjectG, frameBufferObjectA);
 
+            // CREATE A MEMORY OBJECT AND DOWNLOAD FRAME BUFFER OBJECT TO IT
+            LAUMemoryObject obj(frameBufferObjectA->width(), frameBufferObjectA->height(), 4, sizeof(float));
+            glBindTexture(GL_TEXTURE_2D, frameBufferObjectA->texture());
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, obj.constPointer());
+            obj.save(QString("/tmp/frameBufferObjectG.tif"));
+
             // PREPROCESS THE IMAGE BY LOWPASS FILTERING IN THE X AND Y DIRECTION
             dwtHighPassFiltering();
             boxCarLowPassFiltering();
