@@ -199,12 +199,16 @@ LAUMemoryObject LAUImageMatchingWidget::matchByReduction(LAUMemoryObject objA, L
     } else if (objB.colors() == 4) {
         cvtColor(imgA, imgB, COLOR_RGBA2GRAY);
     }
+
+    imshow("image B", imgB);
+
     Mat imgX, imgY;
     reduce(imgB, imgX, 0, REDUCE_AVG, CV_32SC1);
     reduce(imgB, imgY, 1, REDUCE_AVG, CV_32SC1);
 
     int lftEdge = imgX.cols - 1, rghEdge = 0;
     for (int n = 0; n < imgX.cols; n++) {
+        qDebug() << imgX.at<int>(n);
         if (imgX.at<int>(n) < 180) {
             lftEdge = qMin(n, lftEdge);
             rghEdge = qMax(n, rghEdge);
@@ -250,7 +254,8 @@ void LAUImageMatchDialog::onBatchProcessImages()
             dialog.setValue(n);
             qApp->processEvents();
         }
-        LAUMemoryObject object = LAUImageMatchingWidget::match(LAUMemoryObject(printedFiles.at(n).absoluteFilePath()), LAUMemoryObject(prestineFiles.at(n).absoluteFilePath()));
+        //LAUMemoryObject object = LAUImageMatchingWidget::match(LAUMemoryObject(printedFiles.at(n).absoluteFilePath()), LAUMemoryObject(prestineFiles.at(n).absoluteFilePath()));
+        LAUMemoryObject object = widget->matchByReduction(LAUMemoryObject(prestineFiles.at(n).absoluteFilePath()), LAUMemoryObject(printedFiles.at(n).absoluteFilePath()));
         if (object.isValid()) {
             QString string = QString("%1/warp%2").arg(LAUDefaultDirectoriesDialog::warpedThumbnailsDirectory).arg(printedFiles.at(n).fileName().right(18));
             object.save(string);

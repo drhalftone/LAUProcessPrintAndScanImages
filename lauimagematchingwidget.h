@@ -26,12 +26,12 @@ public:
 
     LAUMemoryObject leftObject() const
     {
-        return (objectA);
+        return (objectB);
     }
 
     LAUMemoryObject rightObject() const
     {
-        return (objectB);
+        return (objectA);
     }
 
     static LAUMemoryObject matchByReduction(LAUMemoryObject objA, LAUMemoryObject objB);
@@ -143,7 +143,7 @@ protected:
     void accept()
     {
         LAUMemoryObject object = widget->matchByReduction(widget->leftObject(), widget->rightObject());
-        if (LAUObjectMatchPreview(object, widget->rightObject()).exec() == QDialog::Accepted) {
+        if (LAUObjectMatchPreview(object, widget->leftObject()).exec() == QDialog::Accepted) {
             if (object.save()) {
                 QDialog::accept();
             }
