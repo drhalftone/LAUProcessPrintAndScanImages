@@ -74,6 +74,10 @@ void LAUFindGridBatchDialog::onUpdateObject(LAUMemoryObject obj)
 
         // LOAD THE NEXT IMAGE IN THE INPUT LIST
         if (filenames.count() > 0) {
+            QString string = filenames.first().split("/").last();
+            string.chop(string.length() - string.lastIndexOf('.'));
+            counter = 100 * string.right(5).toInt();
+
             LAUMemoryObject obj = LAUMemoryObject(filenames.takeFirst());
             if (obj.isValid()) {
                 progress->setValue(progress->maximum() - filenames.count());
